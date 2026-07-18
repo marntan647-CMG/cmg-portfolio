@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>CMG | Portfolio Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf8f3;
+    --panel:#ffffff;
+    --line:#e4ddcd;
+    --ink:#22261f;
+    --ink-soft:#5c6157;
+    --cedar:#24413a;
+    --cedar-deep:#182e29;
+    --cedar-tint:#e7efe9;
+    --gold:#c1893c;
+    --gold-tint:#faf0dd;
+    --red:#b3462c;
+    --red-tint:#fbe9e3;
+    --wait:#5b6b7a;
+    --wait-tint:#e9edf1;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(24,46,41,.06), 0 6px 20px rgba(24,46,41,.05);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.45;}
+  h1,h2,h3,.brand{font-family:'Fraunces',serif;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;font-size:14px;}
+  a{color:inherit;}
+
+  /* ---------- Login ---------- */
+  #view-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:
+    radial-gradient(1200px 600px at 15% -10%, #eef3ec 0%, transparent 60%), var(--bg);}
+  .login-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:36px 32px;box-shadow:var(--shadow);}
+  .login-mark{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+  .login-mark svg{flex:none;}
+  .login-mark .word{font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--cedar);line-height:1.15;}
+  .login-mark .sub{font-size:11px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase;}
+  .login-card h1{font-size:22px;margin:0 0 4px;color:var(--cedar-deep);font-weight:600;}
+  .login-card p.hint{margin:0 0 22px;color:var(--ink-soft);font-size:13px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:600;letter-spacing:.02em;}
+  .field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;outline:none;}
+  .field input:focus{border-color:var(--cedar);box-shadow:0 0 0 3px var(--cedar-tint);}
+  .btn{border:none;border-radius:8px;padding:11px 16px;font-weight:600;font-size:14px;transition:transform .05s ease;}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--cedar);color:#fff;width:100%;}
+  .btn-primary:hover{background:var(--cedar-deep);}
+  .login-error{background:var(--red-tint);color:var(--red);border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:14px;display:none;}
+  .login-config-note{margin-top:18px;font-size:11.5px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:14px;}
+
+  /* ---------- Shell ---------- */
+  #app-shell{display:none;min-height:100vh;}
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--cedar-deep);color:#fff;}
+  .topbar .brand-btn{display:flex;align-items:center;gap:10px;background:none;border:none;color:#fff;padding:4px;border-radius:8px;}
+  .topbar .brand-btn:hover{background:rgba(255,255,255,.08);}
+  .topbar .brand-btn .word{font-size:14px;font-weight:600;line-height:1.15;text-align:left;}
+  .topbar .brand-btn .sub{font-size:10px;opacity:.7;letter-spacing:.08em;text-transform:uppercase;}
+  .profile-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;padding:6px 12px 6px 6px;border-radius:24px;font-size:13px;}
+  .profile-btn:hover{background:rgba(255,255,255,.16);}
+
+  /* topbar layout: brand | search (flex) | bell + profile */
+  .topbar-mid{flex:1;display:flex;justify-content:center;min-width:0;padding:0 10px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex:none;}
+  .search-wrap{position:relative;width:100%;max-width:380px;}
+  .search-input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;}
+  .search-input::placeholder{color:rgba(255,255,255,.55);}
+  .search-input:focus{background:rgba(255,255,255,.18);outline:none;}
+  .search-results{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border-radius:10px;box-shadow:var(--shadow);max-height:360px;overflow-y:auto;z-index:50;}
+  .search-results .sr-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .search-results .sr-item:last-child{border-bottom:none;}
+  .search-results .sr-item:hover{background:var(--cedar-tint);}
+  .search-results .sr-kind{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700;}
+  .search-results .sr-label{font-size:13.5px;color:var(--ink);font-weight:600;}
+  .search-results .sr-sub{font-size:11.5px;color:var(--ink-soft);}
+  .search-results .sr-empty{padding:14px;text-align:center;color:var(--ink-soft);font-size:13px;}
+
+  .bell-btn{position:relative;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;display:flex;align-items:center;justify-content:center;}
+  .bell-btn:hover{background:rgba(255,255,255,.16);}
+  .bell-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+  .notif-panel{position:absolute;top:44px;right:0;width:340px;max-height:440px;background:#fff;border-radius:12px;box-shadow:var(--shadow);z-index:60;overflow:hidden;display:flex;flex-direction:column;}
+  .notif-panel-head{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700;color:var(--cedar-deep);font-size:14px;}
+  .notif-list{overflow-y:auto;padding:6px;max-height:390px;}
+  .notif-item{display:flex;gap:0;padding:10px;border-radius:8px;margin-bottom:4px;border-left:4px solid var(--line);}
+  .notif-item.unread{background:var(--cedar-tint);}
+  .notif-item.n-blue{border-left-color:#2f6fb0;}
+  .notif-item.n-green{border-left-color:#3a9a5c;}
+  .notif-item.n-orange{border-left-color:var(--gold);}
+  .notif-item.n-red{border-left-color:var(--red);}
+  .notif-item .ni-title{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .notif-item .ni-sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .notif-item .ni-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
+  .notif-item .ni-actions button{font-size:10.5px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);}
+  .notif-item .ni-actions button:hover{border-color:var(--cedar);color:var(--cedar-deep);}
+  @media(max-width:640px){
+    .notif-panel{position:fixed;top:56px;left:8px;right:8px;width:auto;}
+    .topbar{flex-wrap:wrap;row-gap:8px;}
+    .topbar-mid{order:3;flex:1 1 100%;}
+    .search-wrap{max-width:none;}
+  }
+
+  .status-dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;}
+  .status-dot.dot-green{background:#3a9a5c;}
+  .status-dot.dot-orange{background:var(--gold);}
+  .status-dot.dot-red{background:var(--red);}
+
+  .presence-strip{background:var(--cedar-deep);border-top:1px solid rgba(255,255,255,.12);padding:6px 18px;display:flex;gap:16px;align-items:center;overflow-x:auto;}
+  .presence-chip{display:flex;align-items:center;gap:6px;color:#fff;font-size:11.5px;white-space:nowrap;}
+  .presence-chip .avatar-sm{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;flex:none;}
+  .presence-chip .p-status{opacity:.85;}
+
+  .att-row{border:1px solid var(--line);border-radius:10px;margin-bottom:6px;overflow:hidden;}
+  .att-main{display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer;}
+  .att-main:hover{background:var(--cedar-tint);}
+  .att-date{font-size:13px;font-weight:700;color:var(--cedar-deep);width:96px;flex:none;}
+  .att-times{font-size:12.5px;flex:1;padding:2px 8px;border-radius:6px;}
+  .att-times.att-ontime{background:var(--cedar-tint);color:var(--cedar);}
+  .att-times.att-late{background:var(--red-tint);color:var(--red);}
+  .att-dur{font-size:11.5px;color:var(--ink-soft);flex:none;}
+  .att-arrow{flex:none;color:var(--ink-soft);}
+  .att-detail{padding:8px 14px 12px;border-top:1px solid var(--line);}
+  .att-status-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--line);}
+  .att-status-row:last-child{border-bottom:none;}
+  .att-status-row.att-over{color:var(--red);font-weight:700;}
+
+  .an-controls{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .an-controls select,.an-controls input{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
+  .an-range{font-size:12px;color:var(--ink-soft);margin-bottom:10px;}
+  .an-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:520px){.an-grid{grid-template-columns:1fr;}}
+  .an-card{border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .an-card h3{margin:0 0 8px;font-size:13.5px;color:var(--cedar-deep);}
+  .an-counts{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .an-total{font-size:12.5px;font-weight:700;margin-bottom:8px;}
+  .an-pct{display:inline-block;font-size:13px;font-weight:800;padding:4px 10px;border-radius:20px;}
+  .an-pct.pct-red{background:var(--red-tint);color:var(--red);}
+  .an-pct.pct-orange{background:var(--gold-tint);color:var(--gold);}
+  .an-pct.pct-green{background:var(--cedar-tint);color:var(--cedar);}
+
+  .hist-row{border-left:4px solid var(--line);padding:8px 10px;margin-bottom:5px;border-radius:6px;background:var(--panel);}
+  .hist-row.n-blue{border-left-color:#2f6fb0;} .hist-row.n-green{border-left-color:#3a9a5c;}
+  .hist-row.n-orange{border-left-color:var(--gold);} .hist-row.n-red{border-left-color:var(--red);}
+  .hist-row.hist-neutral{border-left-color:var(--line);}
+  .hist-label{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .hist-sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:#3a2508;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+
+  .layout{display:flex;max-width:1280px;margin:0 auto;}
+  nav.sidenav{width:210px;flex:none;padding:18px 12px;position:sticky;top:49px;align-self:flex-start;height:calc(100vh - 49px);}
+  nav.sidenav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;padding:10px 12px;border-radius:8px;color:var(--ink-soft);font-size:14px;font-weight:500;margin-bottom:2px;}
+  nav.sidenav button:hover{background:var(--cedar-tint);color:var(--cedar-deep);}
+  nav.sidenav button.active{background:var(--cedar);color:#fff;}
+  nav.sidenav .navicon{width:16px;text-align:center;opacity:.85;}
+
+  main{flex:1;min-width:0;padding:22px 24px 60px;}
+  .pagehead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+  .pagehead h1{font-size:22px;margin:0;color:var(--cedar-deep);}
+  .pagehead .desc{color:var(--ink-soft);font-size:13px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+  .card h2{font-size:15px;margin:0 0 10px;color:var(--cedar-deep);display:flex;align-items:center;justify-content:space-between;}
+  .count-pill{background:var(--gold-tint);color:var(--gold);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700;}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px;border-bottom:1px solid var(--line);}
+  .row:last-child{border-bottom:none;}
+  .row .meta{min-width:0;}
+  .row .meta .t{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row .meta .s{font-size:12px;color:var(--ink-soft);}
+  .tag{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;}
+  .tag-open{background:var(--gold-tint);color:var(--gold);}
+  .tag-pending{background:var(--wait-tint);color:var(--wait);}
+  .tag-closed{background:var(--cedar-tint);color:var(--cedar);}
+  .tag-overdue{background:var(--red-tint);color:var(--red);}
+  .row .meta .t.is-closed{text-decoration:line-through;opacity:.55;}
+  .empty{color:var(--ink-soft);font-size:13px;padding:14px 4px;}
+
+  .btn-sm{background:var(--cedar-tint);color:var(--cedar-deep);border:none;border-radius:7px;padding:6px 10px;font-size:12.5px;font-weight:600;}
+  .btn-sm:hover{background:#d9e6de;}
+  .btn-gold{background:var(--gold);color:#3a2508;}
+  .btn-gold:hover{background:#ad7830;}
+  .fab{position:fixed;bottom:22px;right:22px;background:var(--cedar);color:#fff;border:none;border-radius:30px;padding:13px 20px;font-weight:700;font-size:14px;box-shadow:0 8px 22px rgba(24,46,41,.35);z-index:15;}
+  .fab:hover{background:var(--cedar-deep);}
+
+  .comm-list{display:flex;flex-direction:column;gap:8px;}
+  .comm-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:13px 16px;cursor:pointer;transition:border-color .1s,background .1s;}
+  .comm-row:hover{background:var(--cedar-tint);}
+  .comm-row.portfolio-renee{border-left-color:var(--cedar);}
+  .comm-row.portfolio-christina{border-left-color:var(--gold);}
+  .comm-row .comm-row-main{min-width:0;}
+  .comm-row h3{margin:0 0 3px;font-size:15px;color:var(--cedar-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .comm-row .addr{font-size:12.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .comm-badge{flex:none;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;white-space:nowrap;}
+  .comm-row.portfolio-renee .comm-badge{background:var(--cedar-tint);color:var(--cedar-deep);}
+  .comm-row.portfolio-christina .comm-badge{background:var(--gold-tint);color:var(--gold);}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap;}
+  .tabs button{background:none;border:none;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;}
+  .tabs button.active{color:var(--cedar-deep);border-color:var(--cedar);}
+
+  .folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;}
+  .folder-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;position:relative;}
+  .folder-card:hover{border-color:var(--cedar);}
+  .folder-card .fic{font-size:22px;}
+  .folder-card .fname{font-size:13px;font-weight:700;color:var(--cedar-deep);margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .folder-card .fcount{font-size:11.5px;color:var(--ink-soft);}
+  .folder-card .fmenu{position:absolute;top:8px;right:8px;display:flex;gap:4px;}
+  .folder-card .fmenu button{background:#fff;border:1px solid var(--line);border-radius:6px;font-size:10px;padding:2px 6px;color:var(--ink-soft);}
+  .folder-card .fmenu button:hover{color:var(--cedar-deep);border-color:var(--cedar);}
+  .doc-links a{color:var(--cedar);text-decoration:underline;font-weight:600;}
+  .doc-links .sep{color:var(--line);margin:0 4px;}
+  .attorney-card{margin-bottom:16px;}
+  .attorney-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:10px;}
+  .attorney-grid .af-label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;}
+  .attorney-grid .af-val{font-size:13.5px;color:var(--ink);}
+  @media(max-width:520px){.attorney-grid{grid-template-columns:1fr;}}
+
+  .backlink{background:none;border:none;color:var(--ink-soft);font-size:13px;margin-bottom:8px;padding:4px 0;}
+  .backlink:hover{color:var(--cedar-deep);}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(24,30,26,.45);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .overlay.show{display:flex;}
+  .modal{background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;max-height:88vh;overflow-y:auto;padding:20px 20px 26px;}
+  .modal.wide{max-width:680px;}
+  @media(min-width:640px){.overlay{align-items:center;}.modal{border-radius:16px;margin-bottom:0;}}
+  .modal h2{margin:0 0 14px;font-size:17px;color:var(--cedar-deep);}
+  .modal .field{margin-bottom:12px;}
+  .modal select,.modal textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+  .modal textarea{min-height:70px;resize:vertical;}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;}
+  .modal-actions .btn{flex:1;}
+  .btn-ghost{background:var(--cedar-tint);color:var(--cedar-deep);}
+  .type-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .type-chip{border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:20px;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+  .type-chip.active{background:var(--cedar);border-color:var(--cedar);color:#fff;}
+
+  .gcal-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .gcal-nav{display:flex;align-items:center;gap:8px;}
+  .gcal-nav button{background:var(--cedar-tint);color:var(--cedar-deep);border:none;width:30px;height:30px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;line-height:1;}
+  .gcal-nav button:hover{background:var(--cedar);color:#fff;}
+  .gcal-today-btn{background:none;border:1px solid var(--line);padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+  .gcal-today-btn:hover{border-color:var(--cedar);color:var(--cedar-deep);}
+  .gcal-title{font-size:16.5px;font-weight:700;color:var(--cedar-deep);min-width:150px;text-align:center;}
+  .gcal-filter select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;}
+  .gcal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--line);border-left:1px solid var(--line);background:var(--panel);border-radius:var(--radius);overflow:hidden;}
+  .gcal-wd{padding:8px 6px;font-size:10.5px;font-weight:700;color:var(--ink-soft);text-align:center;background:var(--cedar-tint);border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em;}
+  .gcal-cell{min-height:92px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px;cursor:pointer;display:flex;flex-direction:column;gap:3px;transition:background .1s;}
+  .gcal-cell:hover{background:var(--cedar-tint);}
+  .gcal-cell.other-month{background:#faf9f6;}
+  .gcal-cell.other-month .gcal-daynum{color:#c7c9c0;}
+  .gcal-daynum{font-size:11.5px;font-weight:700;color:var(--ink);width:21px;height:21px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+  .gcal-cell.is-today .gcal-daynum{background:var(--cedar);color:#fff;}
+  .gcal-chip{font-size:10px;padding:2px 5px;border-radius:5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;}
+  .gcal-chip.chip-meeting{background:var(--cedar);}
+  .gcal-chip.chip-ai{background:var(--gold);color:#3a2508;}
+  .gcal-chip.chip-task{background:var(--red);}
+  .gcal-more{font-size:9.5px;color:var(--ink-soft);font-weight:700;padding-left:3px;}
+  .cal-day{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+  .cal-day .date-head{background:var(--cedar-tint);color:var(--cedar-deep);font-weight:700;font-size:12.5px;padding:8px 14px;}
+  .cal-evt{display:flex;gap:10px;padding:10px 4px;border-top:1px solid var(--line);align-items:center;}
+  .cal-evt:first-child{border-top:none;}
+  .cal-evt .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .dot-meeting{background:var(--cedar);} .dot-ai{background:var(--gold);} .dot-task{background:var(--red);}
+  .cal-evt .et{font-size:13px;font-weight:600;} .cal-evt .es{font-size:11.5px;color:var(--ink-soft);}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--cedar-deep);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:80;display:none;}
+  .loading{color:var(--ink-soft);font-size:13px;padding:20px 4px;}
+
+  /* Mobile */
+  @media(max-width:820px){
+    .layout{flex-direction:column;}
+    nav.sidenav{width:100%;height:auto;position:sticky;top:49px;display:flex;overflow-x:auto;padding:8px 12px;gap:4px;background:var(--bg);border-bottom:1px solid var(--line);z-index:19;}
+    nav.sidenav button{white-space:nowrap;width:auto;margin-bottom:0;}
+    .grid2{grid-template-columns:1fr;}
+    .gcal-cell{min-height:58px;padding:3px;}
+    .gcal-daynum{font-size:10.5px;width:18px;height:18px;}
+    .gcal-chip{font-size:8.5px;padding:1px 3px;}
+    .gcal-title{font-size:14.5px;min-width:120px;}
+    .gcal-wd{font-size:9px;padding:6px 2px;}
+    main{padding:16px 14px 90px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="view-login">
+  <div class="login-card">
+    <div class="login-mark">
+      <svg width="34" height="34" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="57" fill="#ffffff"/>
+        <circle cx="60" cy="60" r="53" fill="none" stroke="#173226" stroke-width="7"/>
+        <g fill="#a9c2ac" transform="translate(76,90) scale(0.5)"><path d="M0,-90 L10,-70 L4,-70 L16,-50 L8,-50 L22,-28 L12,-28 L28,-2 L-28,-2 L-12,-28 L-22,-28 L-8,-50 L-16,-50 L-4,-70 L-10,-70 Z"/><path d="M-5,-2 L5,-2 L5,9 L-5,9 Z"/></g>
+        <g fill="#4f7d63" transform="translate(59,93) scale(0.64)"><path d="M0,-90 L10,-70 L4,-70 L16,-50 L8,-50 L22,-28 L12,-28 L28,-2 L-28,-2 L-12,-28 L-22,-28 L-8,-50 L-16,-50 L-4,-70 L-10,-70 Z"/><path d="M-5,-2 L5,-2 L5,9 L-5,9 Z"/></g>
+        <g fill="#173226" transform="translate(43,96) scale(0.76)"><path d="M0,-90 L10,-70 L4,-70 L16,-50 L8,-50 L22,-28 L12,-28 L28,-2 L-28,-2 L-12,-28 L-22,-28 L-8,-50 L-16,-50 L-4,-70 L-10,-70 Z"/><path d="M-5,-2 L5,-2 L5,9 L-5,9 Z"/></g>
+      </svg>
+      <div><div class="word">CMG</div><div class="sub">Portfolio Management</div></div>
+    </div>
+    <h1>Sign in</h1>
+    <p class="hint">Use the credentials issued to you by CMG.</p>
+    <div class="login-error" id="login-error">Name or password is incorrect.</div>
+    <div class="field"><label>Full name</label><input id="login-name" placeholder="e.g. Renee Crocker" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
+    <div class="login-config-note">Backend not connected? Set <code>API_URL</code> at the top of this file's script to your deployed Google Apps Script Web App URL.</div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app-shell">
+  <div class="topbar">
+    <button class="brand-btn" onclick="openLogoPopout()">
+      <svg width="26" height="26" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="57" fill="#ffffff"/>
+        <circle cx="60" cy="60" r="53" fill="none" stroke="#173226" stroke-width="7"/>
+        <g fill="#a9c2ac" transform="translate(76,90) scale(0.5)"><path d="M0,-90 L10,-70 L4,-70 L16,-50 L8,-50 L22,-28 L12,-28 L28,-2 L-28,-2 L-12,-28 L-22,-28 L-8,-50 L-16,-50 L-4,-70 L-10,-70 Z"/><path d="M-5,-2 L5,-2 L5,9 L-5,9 Z"/></g>
+        <g fill="#4f7d63" transform="translate(59,93) scale(0.64)"><path d="M0,-90 L10,-70 L4,-70 L16,-50 L8,-50 L22,-28 L12,-28 L28,-2 L-28,-2 L-12,-28 L-22,-28 L-8,-50 L-16,-50 L-4,-70 L-10,-70 Z"/><path d="M-5,-2 L5,-2 L5,9 L-5,9 Z"/></g>
+        <g fill="#173226" transform="translate(43,96) scale(0.76)"><path d="M0,-90 L10,-70 L4,-70 L16,-50 L8,-50 L22,-28 L12,-28 L28,-2 L-28,-2 L-12,-28 L-22,-28 L-8,-50 L-16,-50 L-4,-70 L-10,-70 Z"/><path d="M-5,-2 L5,-2 L5,9 L-5,9 Z"/></g>
+      </svg>
+      <span><span class="word" style="display:block">CMG</span><span class="sub">Portfolio Management</span></span>
+    </button>
+    <div class="topbar-mid">
+      <div class="search-wrap" id="search-wrap">
+        <input id="search-input" class="search-input" placeholder="Search communities, action items, tasks…" oninput="onSearchInput()">
+        <div id="search-results" class="search-results" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div style="position:relative;">
+        <button class="bell-btn" onclick="toggleNotifications()">&#128276;<span id="bell-badge" class="bell-badge" style="display:none;">0</span></button>
+        <div id="notif-panel" class="notif-panel" style="display:none;"></div>
+      </div>
+      <button class="profile-btn" onclick="openProfile()">
+        <span class="status-dot dot-green" id="profile-status-dot"></span>
+        <span class="avatar" id="avatar-initials">--</span>
+        <span id="profile-name-short">—</span>
+      </button>
+    </div>
+  </div>
+  <div class="presence-strip" id="presence-strip" style="display:none;"></div>
+
+  <div class="layout">
+    <nav class="sidenav">
+      <button data-nav="dashboard" onclick="navTo('dashboard')"><span class="navicon">&#9679;</span> Dashboard</button>
+      <button data-nav="communities" onclick="navTo('communities')"><span class="navicon">&#8962;</span> Communities</button>
+      <button data-nav="calendar" onclick="navTo('calendar')"><span class="navicon">&#128197;</span> Calendar</button>
+    </nav>
+
+    <main id="main">
+      <div class="loading">Loading…</div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ GENERAL ADD MODAL ============ -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG — paste your deployed Apps Script Web App URL below.
+   Apps Script > Deploy > New deployment > Web app > Execute as
+   "Me", Who has access "Anyone with the link". Copy the URL that
+   ends in /exec and paste it here.
+   ============================================================ */
+const API_URL = "https://script.google.com/macros/s/AKfycbwGQhZ9VlMTQx6O0KreUKin3HMZm2vyvCBDqmGQe8xfHFg-QXtxX6ciLE0wxlKi7ovl9A/exec";
+
+/* ---------------- API helper ---------------- */
+async function api(action, payload = {}) {
+  if (!API_URL || API_URL.indexOf("PASTE_") === 0) {
+    toast("Backend not connected yet — see setup instructions.");
+    throw new Error("API_URL not configured");
+  }
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight against Apps Script
+    body: JSON.stringify({ action, payload })
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || "Request failed");
+  return json;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(() => t.style.display = 'none', 2600);
+}
+
+/* ---------------- State ---------------- */
+let STATE = {
+  user: null, // session lives in memory only; signing in again after a page refresh is expected
+  communities: [],
+  activeCommunityId: null,
+  view: 'dashboard'
+};
+
+/* ---------------- Login ---------------- */
+async function doLogin() {
+  const name = document.getElementById('login-name').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  document.getElementById('login-error').style.display = 'none';
+  try {
+    const r = await api('login', { name, password: pass });
+    STATE.user = { name: r.name, role: r.role, portfolio: r.portfolio };
+    enterApp();
+  } catch (e) {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function logout() {
+  clearInterval(NOTIF_POLL);
+  STATE.user = null;
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('view-login').style.display = 'flex';
+}
+
+function enterApp() {
+  document.getElementById('view-login').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+  const initials = STATE.user.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('avatar-initials').textContent = initials;
+  document.getElementById('profile-name-short').textContent = STATE.user.name.split(' ')[0];
+  navTo('dashboard');
+  loadCurrentStatus();
+  refreshNotifBadgeOnly();
+  clearInterval(NOTIF_POLL);
+  NOTIF_POLL = setInterval(refreshNotifBadgeOnly, 60000);
+}
+
+/* ---------------- Status / presence ---------------- */
+let CURRENT_STATUS = null;
+let ALL_STATUSES = [];
+const STATUS_OPTIONS = ['Active','Busy','Away','On Break','On Lunch','In a Meeting','On PTO'];
+
+function statusColorClass(status) {
+  if (status === 'Active') return 'dot-green';
+  if (status === 'Busy' || status === 'On Break' || status === 'On Lunch' || status === 'In a Meeting') return 'dot-orange';
+  return 'dot-red'; // Away, On PTO
+}
+function elapsedSince(iso) {
+  if (!iso) return '';
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins/60)}h ${mins%60}m`;
+}
+function formatTimeShort(iso) { try { return new Date(iso).toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'}); } catch(e){ return iso; } }
+function formatDateTimeShort(iso) { try { return new Date(iso).toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}); } catch(e){ return iso; } }
+function minutesBetween(a, b) { return Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000)); }
+function durationHm(a, b) { const m = minutesBetween(a, b); return `${Math.floor(m/60)}h ${m%60}m`; }
+function statusDisplayText(s) {
+  if (!s) return '';
+  if (['On Break','On Lunch','In a Meeting'].includes(s.status) && s.until) return 'Until ' + formatTimeShort(s.until);
+  if (s.status === 'On PTO') return s.coveredBy ? ('Covered by ' + s.coveredBy) : 'On PTO — no coverage set';
+  return s.since ? ('for ' + elapsedSince(s.since)) : '';
+}
+
+async function loadCurrentStatus() {
+  try {
+    const r = await api('getStatuses', {});
+    ALL_STATUSES = r.data;
+    CURRENT_STATUS = r.data.find(s => s.name === STATE.user.name) || null;
+    const dot = document.getElementById('profile-status-dot');
+    if (dot && CURRENT_STATUS) dot.className = 'status-dot ' + statusColorClass(CURRENT_STATUS.status);
+    renderPresenceStrip();
+  } catch (e) { /* status is non-critical, fail silently */ }
+}
+
+function renderPresenceStrip() {
+  const strip = document.getElementById('presence-strip');
+  const isAdmin = STATE.user.role === 'Admin';
+  const visible = isAdmin
+    ? ALL_STATUSES.filter(s => s.name !== STATE.user.name)
+    : ALL_STATUSES.filter(s => s.name === 'Marnell Antecristo');
+  if (!visible.length) { strip.style.display = 'none'; return; }
+  strip.style.display = 'flex';
+  strip.innerHTML = visible.map(s => `
+    <span class="presence-chip">
+      <span class="avatar-sm">${escapeHtml(s.initials||'')}</span>
+      <span class="status-dot ${statusColorClass(s.status)}"></span>
+      <span>${escapeHtml(s.status)}</span>
+      <span class="p-status">${escapeHtml(statusDisplayText(s))}</span>
+    </span>`).join('');
+}
+
+/* ---------------- Profile modal (tabs: Status / Profile / Settings / Feedback) ---------------- */
+let PROFILE_TAB = 'status';
+let PROFILE_DATA = null;
+async function openProfile() {
+  PROFILE_TAB = 'status';
+  showModal('<div class="loading">Loading…</div>', false, true);
+  try {
+    const [statusR, profileR] = await Promise.all([api('getStatuses', {}), api('getProfile', { name: STATE.user.name })]);
+    ALL_STATUSES = statusR.data;
+    CURRENT_STATUS = ALL_STATUSES.find(s => s.name === STATE.user.name) || null;
+    PROFILE_DATA = profileR.data;
+    showModal(profileModalHtml(), false, true);
+    onStatusSelectChange();
+  } catch (e) { showModal(`<div class="empty">Couldn't load profile. ${e.message}</div>`, false, true); }
+}
+function profileModalHtml() {
+  return `
+    <h2>${escapeHtml(STATE.user.name)}</h2>
+    <div class="tabs">
+      <button class="${PROFILE_TAB==='status'?'active':''}" onclick="switchProfileTab('status')">Status</button>
+      <button class="${PROFILE_TAB==='profile'?'active':''}" onclick="switchProfileTab('profile')">Profile</button>
+      <button class="${PROFILE_TAB==='settings'?'active':''}" onclick="switchProfileTab('settings')">Settings</button>
+      <button class="${PROFILE_TAB==='feedback'?'active':''}" onclick="switchProfileTab('feedback')">Feedback</button>
+    </div>
+    <div id="profile-tab-body">${renderProfileTabBody()}</div>`;
+}
+function switchProfileTab(tab) { PROFILE_TAB = tab; showModal(profileModalHtml(), false, true); if (tab === 'status') onStatusSelectChange(); }
+function renderProfileTabBody() {
+  if (PROFILE_TAB === 'status') return renderStatusTabHtml();
+  if (PROFILE_TAB === 'profile') return renderProfileFieldsHtml();
+  if (PROFILE_TAB === 'settings') return renderSettingsTabHtml();
+  return renderFeedbackTabHtml();
+}
+
+function renderStatusTabHtml() {
+  const s = CURRENT_STATUS;
+  return `
+    <div class="field"><label>Current status</label>
+      <select id="status-select" onchange="onStatusSelectChange()">
+        ${STATUS_OPTIONS.map(o => `<option ${s && s.status===o?'selected':''}>${o}</option>`).join('')}
+      </select>
+    </div>
+    <div id="status-extra-fields"></div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="submitStatus()">Update status</button></div>
+    <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+    <div class="field"><label>Attendance today</label>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-gold" onclick="doClockIn()">Clock In${s && s.clockInTime ? ' (' + formatTimeShort(s.clockInTime) + ')' : ''}</button>
+        <button class="btn btn-sm" onclick="doClockOut()">Clock Out${s && s.clockOutTime ? ' (' + formatTimeShort(s.clockOutTime) + ')' : ''}</button>
+      </div>
+    </div>`;
+}
+function onStatusSelectChange() {
+  const el = document.getElementById('status-extra-fields'); if (!el) return;
+  const status = val('status-select');
+  const s = CURRENT_STATUS;
+  if (['On Break','On Lunch','In a Meeting'].includes(status)) {
+    const defaultUntil = new Date(Date.now() + (status==='On Lunch'?60:15)*60000);
+    const untilVal = s && s.until ? s.until.slice(0,16) : defaultUntil.toISOString().slice(0,16);
+    el.innerHTML = `<div class="field"><label>Until</label><input type="datetime-local" id="status-until" value="${untilVal}"></div>`;
+  } else if (status === 'On PTO') {
+    el.innerHTML = `
+      <div class="field"><label>Until</label><input type="datetime-local" id="status-until" value="${s && s.until ? s.until.slice(0,16) : ''}"></div>
+      <div class="field"><label>Covered by</label><input id="status-coveredby" value="${escapeAttr(s && s.coveredBy || '')}" placeholder="Who's covering for you"></div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+async function submitStatus() {
+  const status = val('status-select');
+  const until = document.getElementById('status-until') ? new Date(val('status-until')).toISOString() : '';
+  const coveredBy = document.getElementById('status-coveredby') ? val('status-coveredby') : '';
+  try {
+    await api('setStatus', { name: STATE.user.name, status, until, coveredBy });
+    toast('Status updated.');
+    await loadCurrentStatus();
+    CURRENT_STATUS = ALL_STATUSES.find(s => s.name === STATE.user.name) || null;
+  } catch (e) { toast(e.message); }
+}
+async function doClockIn() { try { await api('clockIn', { name: STATE.user.name }); toast('Clocked in.'); await loadCurrentStatus(); showModal(profileModalHtml(), false, true); } catch (e) { toast(e.message); } }
+async function doClockOut() { try { await api('clockOut', { name: STATE.user.name }); toast('Clocked out.'); await loadCurrentStatus(); showModal(profileModalHtml(), false, true); } catch (e) { toast(e.message); } }
+
+function renderProfileFieldsHtml() {
+  const p = PROFILE_DATA || {};
+  return `
+    <div class="field"><label>Name</label><div>${escapeHtml(p.name||'')}</div></div>
+    <div class="field"><label>Role</label><div>${escapeHtml(p.role||'')}</div></div>
+    <div class="field"><label>Department</label><input id="pf-department" value="${escapeAttr(p.department||'')}"></div>
+    <div class="field"><label>Agency</label><input id="pf-agency" value="${escapeAttr(p.agency||'')}"></div>
+    <div class="field"><label>Date started</label><input type="date" id="pf-dateStarted" value="${p.dateStarted||''}"></div>
+    <div class="field"><label>Phone number</label><input id="pf-phone" value="${escapeAttr(p.phone||'')}"></div>
+    <div class="field"><label>Email address</label><input id="pf-email" value="${escapeAttr(p.email||'')}"></div>
+    <div class="field"><label>Address</label><input id="pf-address" value="${escapeAttr(p.address||'')}"></div>
+    <div class="field"><label>Description</label><textarea id="pf-description">${escapeHtml(p.description||'')}</textarea></div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="submitProfileFields()">Save</button></div>`;
+}
+async function submitProfileFields() {
+  try {
+    await api('updateProfile', { name: STATE.user.name, fields: {
+      department: val('pf-department'), agency: val('pf-agency'), dateStarted: val('pf-dateStarted'),
+      phone: val('pf-phone'), email: val('pf-email'), address: val('pf-address'), description: val('pf-description') } });
+    toast('Saved.');
+  } catch (e) { toast(e.message); }
+}
+
+function renderSettingsTabHtml() {
+  return `
+    <p style="color:var(--ink-soft);font-size:13px;">More preferences coming soon.</p>
+    <div class="modal-actions"><button class="btn btn-primary" style="background:var(--red)" onclick="logout()">Log out</button></div>`;
+}
+
+function renderFeedbackTabHtml() {
+  return `
+    <div class="field"><label>Type</label><select id="fb-type"><option>General</option><option>Basic</option></select></div>
+    <div class="field"><label>Message</label><textarea id="fb-message" placeholder="What's on your mind?"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="submitFeedbackForm()">Send feedback</button></div>`;
+}
+async function submitFeedbackForm() {
+  const message = val('fb-message').trim();
+  if (!message) { toast('Write a message first.'); return; }
+  try {
+    await api('submitFeedback', { name: STATE.user.name, type: val('fb-type'), message });
+    toast('Thanks — feedback sent.');
+    document.getElementById('fb-message').value = '';
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Logo popout (Attendance / Analytics / History) ---------------- */
+let LOGO_TAB = 'attendance';
+function openLogoPopout() {
+  LOGO_TAB = 'attendance';
+  showModal(logoPopoutHtml(), false, true);
+  renderLogoTabBody();
+}
+function logoPopoutHtml() {
+  return `
+    <h2>Activity</h2>
+    <div class="tabs">
+      <button class="${LOGO_TAB==='attendance'?'active':''}" onclick="switchLogoTab('attendance')">Attendance</button>
+      <button class="${LOGO_TAB==='analytics'?'active':''}" onclick="switchLogoTab('analytics')">Analytics</button>
+      <button class="${LOGO_TAB==='history'?'active':''}" onclick="switchLogoTab('history')">History</button>
+    </div>
+    <div id="logo-tab-body"><div class="loading">Loading…</div></div>`;
+}
+function switchLogoTab(tab) { LOGO_TAB = tab; showModal(logoPopoutHtml(), false, true); renderLogoTabBody(); }
+async function renderLogoTabBody() {
+  const el = document.getElementById('logo-tab-body');
+  if (LOGO_TAB === 'attendance') await renderAttendanceTab(el);
+  else if (LOGO_TAB === 'analytics') await renderAnalyticsTab(el);
+  else await renderHistoryTab(el);
+}
+
+async function renderAttendanceTab(el) {
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const r = await api('getAttendance', { name: STATE.user.name });
+    if (!r.data.length) { el.innerHTML = '<div class="empty">No attendance records yet.</div>'; return; }
+    el.innerHTML = r.data.map(a => {
+      const t = a.clockIn ? new Date(a.clockIn) : null;
+      const late = t && (t.getHours() > 9 || (t.getHours() === 9 && t.getMinutes() > 0));
+      const dur = (a.clockIn && a.clockOut) ? durationHm(a.clockIn, a.clockOut) : (a.clockIn ? 'In progress' : '—');
+      return `<div class="att-row">
+        <div class="att-main" onclick="toggleAttDay('${a.date}', this)">
+          <span class="att-date">${a.date}</span>
+          <span class="att-times ${late?'att-late':'att-ontime'}">${a.clockIn?formatTimeShort(a.clockIn):'—'} – ${a.clockOut?formatTimeShort(a.clockOut):'—'}</span>
+          <span class="att-dur">${dur}</span>
+          <span class="att-arrow">&#9656;</span>
+        </div>
+        <div class="att-detail" style="display:none;"></div>
+      </div>`;
+    }).join('');
+  } catch (e) { el.innerHTML = `<div class="empty">Couldn't load. ${e.message}</div>`; }
+}
+async function toggleAttDay(date, headEl) {
+  const row = headEl.parentElement;
+  const detail = row.querySelector('.att-detail');
+  const arrow = headEl.querySelector('.att-arrow');
+  if (detail.style.display === 'block') { detail.style.display = 'none'; arrow.innerHTML = '&#9656;'; return; }
+  detail.style.display = 'block'; arrow.innerHTML = '&#9662;';
+  detail.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const r = await api('getStatusLogForDate', { name: STATE.user.name, date });
+    if (!r.data.length) { detail.innerHTML = '<div class="empty">No status changes recorded.</div>'; return; }
+    detail.innerHTML = r.data.map(s => {
+      const mins = minutesBetween(s.startTime, s.endTime || new Date().toISOString());
+      const over = (s.status === 'On Break' && mins > 15) || (s.status === 'On Lunch' && mins > 60);
+      return `<div class="att-status-row ${over?'att-over':''}">
+        <span>${escapeHtml(s.status)}</span>
+        <span>${formatTimeShort(s.startTime)} – ${s.endTime?formatTimeShort(s.endTime):'now'}</span>
+        <span>${mins} min</span>
+      </div>`;
+    }).join('');
+  } catch (e) { detail.innerHTML = `<div class="empty">Couldn't load. ${e.message}</div>`; }
+}
+
+let ANALYTICS_PERIOD = 'monthly';
+let ANALYTICS_DATE = new Date().toISOString().slice(0,10);
+async function renderAnalyticsTab(el) {
+  el.innerHTML = `
+    <div class="an-controls">
+      <select id="an-period" onchange="onAnalyticsChange()">
+        ${['daily','weekly','monthly','quarterly','yearly'].map(p => `<option value="${p}" ${ANALYTICS_PERIOD===p?'selected':''}>${p[0].toUpperCase()+p.slice(1)}</option>`).join('')}
+      </select>
+      <input type="date" id="an-date" value="${ANALYTICS_DATE}" onchange="onAnalyticsChange()">
+    </div>
+    <div id="an-body" class="loading">Loading…</div>`;
+  await computeAnalytics();
+}
+function onAnalyticsChange() { ANALYTICS_PERIOD = val('an-period'); ANALYTICS_DATE = val('an-date'); computeAnalytics(); }
+function periodRange(period, dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  let start, end;
+  if (period === 'daily') { start = new Date(d); end = new Date(d); }
+  else if (period === 'weekly') { start = new Date(d); end = new Date(d); end.setDate(end.getDate() + 6); }
+  else if (period === 'monthly') { start = new Date(d.getFullYear(), d.getMonth(), 1); end = new Date(d.getFullYear(), d.getMonth()+1, 0); }
+  else if (period === 'quarterly') { const q = Math.floor(d.getMonth()/3); start = new Date(d.getFullYear(), q*3, 1); end = new Date(d.getFullYear(), q*3+3, 0); }
+  else { start = new Date(d.getFullYear(), 0, 1); end = new Date(d.getFullYear(), 11, 31); }
+  return { start: isoLocal(start), end: isoLocal(end) };
+}
+async function computeAnalytics() {
+  const body = document.getElementById('an-body'); if (!body) return;
+  body.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const [aiR, tkR] = await Promise.all([
+      api('getItems', { sheet: 'ActionItems', portfolio: STATE.user.portfolio }),
+      api('getItems', { sheet: 'Tasks', portfolio: STATE.user.portfolio })
+    ]);
+    const range = periodRange(ANALYTICS_PERIOD, ANALYTICS_DATE);
+    const inRange = d => d && d >= range.start && d <= range.end;
+    const ai = aiR.data.filter(x => inRange(x.createdDate));
+    const tk = tkR.data.filter(x => inRange(x.createdDate));
+    body.innerHTML = analyticsHtml(range, ai, tk);
+  } catch (e) { body.innerHTML = `<div class="empty">Couldn't load. ${e.message}</div>`; }
+}
+function analyticsHtml(range, ai, tk) {
+  const count = (arr, status) => arr.filter(x => x.status === status).length;
+  const pctClass = p => p <= 50 ? 'pct-red' : p <= 75 ? 'pct-orange' : 'pct-green';
+  const card = (label, arr) => {
+    const open = count(arr,'Open'), pending = count(arr,'Pending'), closed = count(arr,'Closed'), total = arr.length;
+    const pct = total ? Math.round(closed/total*100) : 0;
+    return `<div class="an-card"><h3>${label}</h3>
+      <div class="an-counts"><span>Open ${open}</span><span>Pending ${pending}</span><span>Closed ${closed}</span></div>
+      <div class="an-total">Total ${total}</div>
+      <div class="an-pct ${pctClass(pct)}">${pct}% closed</div></div>`;
+  };
+  return `<div class="an-range">${range.start} – ${range.end}</div>
+    <div class="an-grid">${card('Action Items', ai)}${card('Tasks', tk)}</div>`;
+}
+
+async function renderHistoryTab(el) {
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const r = await api('getHistory', { portfolio: STATE.user.portfolio, name: STATE.user.name });
+    if (!r.data.length) { el.innerHTML = '<div class="empty">No history yet.</div>'; return; }
+    el.innerHTML = r.data.map(h => {
+      if (h.type === 'activity') {
+        const cls = h.action === 'removed' ? 'n-red' : (h.sheetName === 'ActionItems' ? 'n-blue' : h.sheetName === 'Tasks' ? 'n-green' : 'n-orange');
+        return `<div class="hist-row ${cls}"><div class="hist-label">${h.action==='removed'?'Removed':'Added'}: ${escapeHtml(h.label)}</div>
+          <div class="hist-sub">${escapeHtml(h.communityName||'')} · ${formatDateTimeShort(h.at)}</div></div>`;
+      }
+      if (h.type === 'status') {
+        return `<div class="hist-row hist-neutral"><div class="hist-label">Status: ${escapeHtml(h.label)}</div>
+          <div class="hist-sub">${formatDateTimeShort(h.at)}${h.endAt ? ' – ' + formatDateTimeShort(h.endAt) : ''}</div></div>`;
+      }
+      return `<div class="hist-row hist-neutral"><div class="hist-label">${escapeHtml(h.label)}</div>
+        <div class="hist-sub">${formatDateTimeShort(h.at)}</div></div>`;
+    }).join('');
+  } catch (e) { el.innerHTML = `<div class="empty">Couldn't load. ${e.message}</div>`; }
+}
+
+/* ---------------- Search ---------------- */
+let SEARCH_DEBOUNCE = null;
+function onSearchInput() {
+  clearTimeout(SEARCH_DEBOUNCE);
+  const q = val('search-input');
+  const box = document.getElementById('search-results');
+  if (!q || q.trim().length < 2) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  SEARCH_DEBOUNCE = setTimeout(async () => {
+    try {
+      const r = await api('search', { portfolio: STATE.user.portfolio, query: q });
+      renderSearchResults(r.data);
+    } catch (e) { /* silent */ }
+  }, 300);
+}
+function renderSearchResults(items) {
+  const box = document.getElementById('search-results');
+  if (!items.length) { box.innerHTML = '<div class="sr-empty">No matches.</div>'; box.style.display = 'block'; return; }
+  box.innerHTML = items.map(it => `
+    <div class="sr-item" onclick="goToSearchResult('${it.communityId}')">
+      <div class="sr-kind">${escapeHtml(it.kind)}</div>
+      <div class="sr-label">${escapeHtml(it.label)}</div>
+      <div class="sr-sub">${escapeHtml(it.sub||'')}</div>
+    </div>`).join('');
+  box.style.display = 'block';
+}
+function goToSearchResult(communityId) {
+  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('search-input').value = '';
+  if (communityId) navTo('communityDetail', communityId);
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('search-wrap');
+  if (wrap && !wrap.contains(e.target)) { const box = document.getElementById('search-results'); if (box) box.style.display = 'none'; }
+  const bellWrap = document.getElementById('notif-panel');
+  if (bellWrap && bellWrap.style.display === 'flex' && !e.target.closest('.bell-btn') && !bellWrap.contains(e.target)) {
+    bellWrap.style.display = 'none';
+  }
+});
+
+/* ---------------- Notifications ---------------- */
+let NOTIF_UNREAD = 0;
+let NOTIF_POLL = null;
+function syncBellBadge() {
+  const badge = document.getElementById('bell-badge');
+  if (!badge) return;
+  if (NOTIF_UNREAD > 0) { badge.textContent = NOTIF_UNREAD > 99 ? '99+' : NOTIF_UNREAD; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+}
+async function refreshNotifBadgeOnly() {
+  try { const r = await api('getNotifications', { portfolio: STATE.user.portfolio }); NOTIF_UNREAD = r.unread; syncBellBadge(); } catch (e) {}
+}
+async function toggleNotifications() {
+  const panel = document.getElementById('notif-panel');
+  const opening = panel.style.display !== 'flex';
+  panel.style.display = opening ? 'flex' : 'none';
+  if (opening) await loadNotifPanel();
+}
+async function loadNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  panel.innerHTML = '<div class="notif-panel-head">Notifications</div><div class="notif-list"><div class="loading">Loading…</div></div>';
+  try {
+    const r = await api('getNotifications', { portfolio: STATE.user.portfolio });
+    NOTIF_UNREAD = r.unread; syncBellBadge();
+    panel.innerHTML = `<div class="notif-panel-head">Notifications</div><div class="notif-list">${renderNotifList(r.data)}</div>`;
+  } catch (e) { panel.innerHTML = `<div class="notif-panel-head">Notifications</div><div class="notif-list"><div class="empty">Couldn't load. ${e.message}</div></div>`; }
+}
+function renderNotifList(items) {
+  if (!items.length) return '<div class="empty">No notifications yet.</div>';
+  return items.map(n => {
+    const cls = n.action === 'removed' ? 'n-red' : (n.sheetName === 'ActionItems' ? 'n-blue' : n.sheetName === 'Tasks' ? 'n-green' : 'n-orange');
+    const isSnoozed = n.snoozedUntil && n.snoozedUntil > new Date().toISOString();
+    return `<div class="notif-item ${cls} ${!n.read?'unread':''}">
+      <div class="ni-body">
+        <div class="ni-title">${n.action==='removed'?'Removed':'Added'}: ${escapeHtml(n.itemLabel)}</div>
+        <div class="ni-sub">${escapeHtml(n.communityName||'')} · ${formatDateTimeShort(n.createdAt)}${isSnoozed ? ' · Snoozed until ' + formatDateTimeShort(n.snoozedUntil) : ''}</div>
+        <div class="ni-actions">
+          ${!n.read ? `<button onclick="doMarkRead('${n.id}')">Mark read</button>` : ''}
+          <button onclick="openSnoozeFor('${n.id}')">Snooze</button>
+          <button onclick="doDeleteNotif('${n.id}')">&#10005;</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function doMarkRead(id) { try { await api('markNotificationRead', { id }); await loadNotifPanel(); } catch (e) { toast(e.message); } }
+async function doDeleteNotif(id) { try { await api('deleteNotification', { id }); await loadNotifPanel(); } catch (e) { toast(e.message); } }
+function openSnoozeFor(id) {
+  showModal(`<h2>Snooze notification</h2>
+    <div class="field"><label>Date</label><input type="date" id="snooze-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Time</label><input type="time" id="snooze-time" value="09:00"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSnooze('${id}')">Snooze</button>
+    </div>`, false);
+}
+async function submitSnooze(id) {
+  const date = val('snooze-date'), time = val('snooze-time');
+  if (!date || !time) { toast('Pick a date and time.'); return; }
+  const until = new Date(date + 'T' + time + ':00').toISOString();
+  try { await api('snoozeNotification', { id, until }); closeModal(); toast('Snoozed.'); await loadNotifPanel(); } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Nav ---------------- */
+function navTo(view, ctx) {
+  STATE.view = view;
+  document.querySelectorAll('.sidenav button').forEach(b => b.classList.toggle('active', b.dataset.nav === view));
+  if (view === 'dashboard') renderDashboard();
+  else if (view === 'communities') renderCommunities();
+  else if (view === 'communityDetail') renderCommunityDetail(ctx);
+  else if (view === 'calendar') renderCalendar();
+}
+
+/* ---------------- Dashboard ---------------- */
+function sortByDateDesc(items) {
+  return [...items].sort((a, b) => {
+    const da = a.dueDate || a.createdDate || '';
+    const db = b.dueDate || b.createdDate || '';
+    return db.localeCompare(da);
+  });
+}
+async function renderDashboard() {
+  const main = document.getElementById('main');
+  main.innerHTML = `<div class="pagehead"><div><h1>Dashboard</h1><div class="desc">All action items and tasks across ${STATE.user.portfolio === 'All' ? 'both portfolios' : STATE.user.portfolio}, newest date first.</div></div>
+  <button class="btn btn-sm btn-gold" onclick="openGeneralAdd()">+ Add</button></div>
+  <div class="loading">Loading…</div>`;
+  try {
+    const r = await api('getDashboard', { portfolio: STATE.user.portfolio });
+    const ai = sortByDateDesc(r.actionItems);
+    const tk = sortByDateDesc(r.tasks);
+    main.innerHTML = `
+      <div class="pagehead"><div><h1>Dashboard</h1><div class="desc">All action items and tasks across ${STATE.user.portfolio === 'All' ? 'both portfolios' : STATE.user.portfolio}, newest date first.</div></div>
+      <button class="btn btn-sm btn-gold" onclick="openGeneralAdd()">+ Add</button></div>
+      <div class="grid2">
+        <div class="card"><h2>Action Items <span class="count-pill">${ai.length}</span></h2>
+          <div id="dash-ai">${renderRows(ai, 'ActionItems')}</div>
+        </div>
+        <div class="card"><h2>Tasks <span class="count-pill">${tk.length}</span></h2>
+          <div id="dash-tasks">${renderRows(tk, 'Tasks')}</div>
+        </div>
+      </div>`;
+  } catch (e) { main.innerHTML += `<div class="empty">Couldn't load dashboard. ${e.message}</div>`; }
+}
+
+const ITEM_CACHE = {}; // id -> item object, so onclick handlers never embed raw JSON (avoids apostrophe-breaks-attribute bugs)
+function cacheItems(items) { items.forEach(it => { if (it.id) ITEM_CACHE[it.id] = it; }); }
+
+function renderRows(items, sheet) {
+  if (!items.length) return `<div class="empty">Nothing here yet.</div>`;
+  cacheItems(items);
+  const today = new Date().toISOString().slice(0,10);
+  return items.map(it => {
+    const overdue = it.status !== 'Closed' && it.dueDate && it.dueDate < today;
+    const tagClass = overdue ? 'tag-overdue' : it.status === 'Closed' ? 'tag-closed' : it.status === 'Pending' ? 'tag-pending' : 'tag-open';
+    const tagLabel = overdue ? 'Overdue' : it.status;
+    return `<div class="row">
+      <div class="meta"><div class="t ${it.status==='Closed'?'is-closed':''}">${escapeHtml(it.title)}</div><div class="s">${escapeHtml(it.communityName)} · ${it.dueDate ? 'Due ' + it.dueDate : 'No due date'} · ${escapeHtml(it.assignedTo||'')}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="tag ${tagClass}">${tagLabel}</span>
+        <button class="btn-sm" onclick="editItemById('${sheet}','${it.id}')">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function editItemById(sheet, id) { editItem(sheet, ITEM_CACHE[id]); }
+
+/* ---------------- Communities ---------------- */
+async function loadCommunities() {
+  const r = await api('getCommunities', { portfolio: STATE.user.portfolio });
+  STATE.communities = r.data.slice().sort((a, b) => a.communityName.localeCompare(b.communityName));
+  return STATE.communities;
+}
+function portfolioClass(p) { return p && p.indexOf('Renee') === 0 ? 'portfolio-renee' : 'portfolio-christina'; }
+function portfolioShort(p) { return p && p.indexOf('Renee') === 0 ? 'Renee' : 'Christina'; }
+
+async function renderCommunities() {
+  const main = document.getElementById('main');
+  main.innerHTML = `<div class="pagehead"><div><h1>Communities</h1><div class="desc">HOAs in your portfolio. <a href="#" onclick="openArchived();return false;" style="color:var(--ink-soft);text-decoration:underline;">View archived</a></div></div>
+    <button class="btn btn-sm btn-gold" onclick="openAddCommunity()">+ Add community</button></div>
+    <div class="loading">Loading…</div>`;
+  try {
+    const list = await loadCommunities();
+    main.innerHTML = `<div class="pagehead"><div><h1>Communities</h1><div class="desc">HOAs in your portfolio. <a href="#" onclick="openArchived();return false;" style="color:var(--ink-soft);text-decoration:underline;">View archived</a></div></div>
+      <button class="btn btn-sm btn-gold" onclick="openAddCommunity()">+ Add community</button></div>
+      <div class="comm-list">${list.length ? list.map(c => `
+        <div class="comm-row ${portfolioClass(c.portfolio)}" onclick="navTo('communityDetail','${c.communityId}')">
+          <div class="comm-row-main"><h3>${escapeHtml(c.communityName)}</h3>
+          <div class="addr">${escapeHtml(c.address||'No address on file')}</div></div>
+          <span class="comm-badge">${portfolioShort(c.portfolio)}</span>
+        </div>`).join('') : '<div class="empty">No communities yet. Add one to get started.</div>'}
+      </div>`;
+  } catch (e) { main.innerHTML += `<div class="empty">Couldn't load communities. ${e.message}</div>`; }
+}
+
+/* ---------------- Archived communities (read-only) ---------------- */
+async function openArchived() {
+  showModal(`<h2>Archived communities</h2><div id="archived-body" class="loading">Loading…</div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`);
+  try {
+    const r = await api('getArchived', { portfolio: STATE.user.portfolio });
+    const el = document.getElementById('archived-body');
+    if (!el) return; // modal was closed before this resolved
+    if (!r.data.length) { el.innerHTML = '<div class="empty">No archived communities.</div>'; return; }
+    el.innerHTML = r.data.map(a => {
+      const counts = Object.entries(a.counts || {}).map(([k,v]) => `${v} ${k}`).join(', ');
+      return `<div class="row"><div class="meta"><div class="t">${escapeHtml(a.communityName)}</div>
+        <div class="s">${escapeHtml(a.portfolio)} · archived ${a.archivedDate}${a.archivedBy ? ' by ' + escapeHtml(a.archivedBy) : ''}</div>
+        <div class="s">${escapeHtml(counts || 'No related records')}</div></div></div>`;
+    }).join('');
+  } catch (e) {
+    const el = document.getElementById('archived-body');
+    if (el) el.innerHTML = `<div class="empty">Couldn't load. ${e.message}</div>`;
+  }
+}
+
+function openAddCommunity() {
+  const portfolioOptions = STATE.user.portfolio === 'All'
+    ? `<option>Renee's Portfolio</option><option>Christina's Portfolio</option>`
+    : `<option>${STATE.user.portfolio}</option>`;
+  showModal(`
+    <h2>Add community</h2>
+    <div class="field"><label>Portfolio</label><select id="f-portfolio">${portfolioOptions}</select></div>
+    <div class="field"><label>Community name</label><input id="f-name" placeholder="e.g. Willow Creek HOA"></div>
+    <div class="field"><label>Address</label><input id="f-address" placeholder="123 Main St, City, State"></div>
+    <div class="field"><label>Additional info</label><textarea id="f-info" placeholder="Gate codes, notes, etc."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddCommunity()">Save</button>
+    </div>`);
+}
+async function submitAddCommunity() {
+  try {
+    await api('addCommunity', {
+      portfolio: val('f-portfolio'), communityName: val('f-name'),
+      address: val('f-address'), additionalInfo: val('f-info')
+    });
+    closeModal(); toast('Community added.'); renderCommunities();
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Community Detail ---------------- */
+let COMMUNITY_DETAIL_TAB = 'actionItems';
+async function renderCommunityDetail(communityId) {
+  if (communityId) STATE.activeCommunityId = communityId;
+  const id = STATE.activeCommunityId;
+  if (!STATE.communities.length) await loadCommunities();
+  let c = STATE.communities.find(x => x.communityId === id);
+  if (!c) {
+    // Cache may be stale (e.g. this community was just typed into the Sheet directly) — refetch once before giving up.
+    await loadCommunities();
+    c = STATE.communities.find(x => x.communityId === id);
+  }
+  const main = document.getElementById('main');
+  if (!c) {
+    main.innerHTML = `<div class="empty">Community not found. It may have been deleted, or the link is out of date.
+      <br><br><a href="#" onclick="navTo('communities');return false;" style="color:var(--cedar);font-weight:600;text-decoration:underline;">&larr; Back to Communities</a></div>`;
+    return;
+  }
+
+  main.innerHTML = `
+    <button class="backlink" onclick="navTo('communities')">&larr; All communities</button>
+    <div class="pagehead"><div><h1>${escapeHtml(c.communityName)}</h1><div class="desc">${escapeHtml(c.address||'')}</div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" style="background:var(--red-tint);color:var(--red);" onclick="confirmDeleteCommunity('${id}')">Delete</button>
+        <button class="btn btn-sm btn-gold" onclick="openGeneralAdd('${id}')">+ Add</button>
+      </div></div>
+    <div class="tabs">
+      <button data-t="actionItems" class="${COMMUNITY_DETAIL_TAB==='actionItems'?'active':''}" onclick="setDetailTab('actionItems','${id}')">Action Items</button>
+      <button data-t="tasks" class="${COMMUNITY_DETAIL_TAB==='tasks'?'active':''}" onclick="setDetailTab('tasks','${id}')">Tasks</button>
+      <button data-t="calendar" class="${COMMUNITY_DETAIL_TAB==='calendar'?'active':''}" onclick="setDetailTab('calendar','${id}')">Calendar</button>
+      <button data-t="boardCommittee" class="${COMMUNITY_DETAIL_TAB==='boardCommittee'?'active':''}" onclick="setDetailTab('boardCommittee','${id}')">Board</button>
+      <button data-t="insurance" class="${COMMUNITY_DETAIL_TAB==='insurance'?'active':''}" onclick="setDetailTab('insurance','${id}')">Insurance</button>
+      <button data-t="documents" class="${COMMUNITY_DETAIL_TAB==='documents'?'active':''}" onclick="setDetailTab('documents','${id}')">Documents</button>
+      <button data-t="info" class="${COMMUNITY_DETAIL_TAB==='info'?'active':''}" onclick="setDetailTab('info','${id}')">Additional Info</button>
+    </div>
+    <div id="detail-body"><div class="loading">Loading…</div></div>`;
+  loadDetailTab(id);
+}
+function setDetailTab(tab, id) { COMMUNITY_DETAIL_TAB = tab; DOC_FOLDER = null; renderCommunityDetail(id); }
+
+let DOC_FOLDER = null; // {id, folderName} of the currently open folder, or null = folder list view
+
+async function loadDetailTab(id) {
+  const body = document.getElementById('detail-body');
+  const c = STATE.communities.find(x => x.communityId === id);
+  try {
+    if (COMMUNITY_DETAIL_TAB === 'info') {
+      body.innerHTML = `<div class="card">
+          <h2>Additional Info <button class="btn-sm" onclick="editCommunityInfo('${id}')">Edit</button></h2>
+          <p style="white-space:pre-wrap;color:var(--ink-soft);font-size:13.5px;">${escapeHtml(c.additionalInfo || 'No additional info on file.')}</p>
+        </div>
+        <div class="card attorney-card">
+          <h2>Collections Attorney <button class="btn-sm" onclick="editAttorney('${id}')">Edit</button></h2>
+          ${(c.attorneyFirm||c.attorneyContact||c.attorneyPhone||c.attorneyEmail||c.attorneyInfo) ? `
+          <div class="attorney-grid">
+            <div><div class="af-label">Firm</div><div class="af-val">${escapeHtml(c.attorneyFirm||'—')}</div></div>
+            <div><div class="af-label">Contact</div><div class="af-val">${escapeHtml(c.attorneyContact||'—')}</div></div>
+            <div><div class="af-label">Phone</div><div class="af-val">${escapeHtml(c.attorneyPhone||'—')}</div></div>
+            <div><div class="af-label">Email</div><div class="af-val">${escapeHtml(c.attorneyEmail||'—')}</div></div>
+          </div>
+          ${c.attorneyInfo ? `<p style="white-space:pre-wrap;color:var(--ink-soft);font-size:13px;margin:0 0 6px;">${escapeHtml(c.attorneyInfo)}</p>` : ''}
+          ` : `<div class="empty">No collections attorney on file.</div>`}
+        </div>
+        <div class="card">
+          <h2>Services <button class="btn-sm btn-gold" onclick="openGeneralAdd('${id}','Services')">+ Add service</button></h2>
+          <div id="services-list" class="loading">Loading…</div>
+        </div>`;
+      const sr = await api('getItems', { sheet: 'Services', portfolio: STATE.user.portfolio, communityId: id });
+      document.getElementById('services-list').outerHTML = `<div id="services-list">${renderDetailRows(sr.data, 'Services')}</div>`;
+      return;
+    }
+    if (COMMUNITY_DETAIL_TAB === 'calendar') {
+      const r = await api('getCalendar', { portfolio: STATE.user.portfolio, communityId: id });
+      body.innerHTML = renderAgendaEvents(r.data);
+      return;
+    }
+    if (COMMUNITY_DETAIL_TAB === 'documents') {
+      await renderDocumentsTab(id);
+      return;
+    }
+    const sheetMap = { actionItems: 'ActionItems', tasks: 'Tasks', boardCommittee: 'BoardCommittee', insurance: 'Insurance' };
+    const sheet = sheetMap[COMMUNITY_DETAIL_TAB];
+    const r = await api('getItems', { sheet, portfolio: STATE.user.portfolio, communityId: id });
+    body.innerHTML = `<div class="card">${renderDetailRows(r.data, sheet)}</div>`;
+  } catch (e) { body.innerHTML = `<div class="empty">Couldn't load. ${e.message}</div>`; }
+}
+
+function renderAgendaEvents(events) {
+  if (!events.length) return `<div class="empty">No events on this community's calendar.</div>`;
+  const byDate = {};
+  events.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+  return Object.keys(byDate).sort().map(date => `
+    <div class="cal-day"><div class="date-head">${formatDate(date)}</div>
+      ${byDate[date].map(e => `<div class="cal-evt">
+        <span class="dot ${e.type==='Meeting'?'dot-meeting':e.type==='Task Due'?'dot-task':'dot-ai'}"></span>
+        <div><div class="et">${escapeHtml(e.title)} <span style="font-weight:400;color:var(--ink-soft)">— ${e.type}</span></div>
+        <div class="es">${e.time ? e.time + ' · ' : ''}${e.location ? escapeHtml(e.location) : ''}</div></div>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderDetailRows(items, sheet) {
+  if (!items.length) return `<div class="empty">Nothing here yet.</div>`;
+  if (sheet === 'ActionItems' || sheet === 'Tasks') return renderRows(items, sheet);
+  if (sheet === 'BoardCommittee') { cacheItems(items); return items.map(b => `
+    <div class="row"><div class="meta"><div class="t">${escapeHtml(b.name)} — ${escapeHtml(b.role||'')}</div>
+      <div class="s">${escapeHtml(b.type)}${b.startDate ? ' · Since ' + b.startDate : ''}${b.notes ? ' · ' + escapeHtml(b.notes) : ''}</div></div>
+    <button class="btn-sm" onclick="editItemById('BoardCommittee','${b.id}')">Edit</button></div>`).join(''); }
+  if (sheet === 'Insurance') { cacheItems(items); return items.map(ins => `
+    <div class="row"><div class="meta"><div class="t">${escapeHtml(ins.coverageType)} — ${escapeHtml(ins.carrierName||'')}</div>
+      <div class="s">${ins.policyNumber ? 'Policy ' + escapeHtml(ins.policyNumber) + ' · ' : ''}${ins.renewalDate ? 'Renews ' + ins.renewalDate : 'No renewal date'}${ins.followUpDate ? ' · Follow up ' + ins.followUpDate : ''}</div>
+      <div class="s">${docLinksHtml(ins.docLink, ins.docName)}</div></div>
+    <button class="btn-sm" onclick="editItemById('Insurance','${ins.id}')">Edit</button></div>`).join(''); }
+  if (sheet === 'Services') { cacheItems(items); return items.map(s => `
+    <div class="row"><div class="meta"><div class="t">${escapeHtml(s.serviceType)}</div><div class="s">${escapeHtml(s.shortDescription||'')}</div></div>
+    <button class="btn-sm" onclick="editItemById('Services','${s.id}')">Edit</button></div>`).join(''); }
+  if (sheet === 'Documents') { cacheItems(items); return items.map(d => `
+    <div class="row"><div class="meta"><div class="t">${docIcon(d.linkOrNotes)} ${escapeHtml(d.title)}</div>
+      <div class="s">${escapeHtml(d.type||'')}${d.linkOrNotes ? ' · ' + docLinksHtml(d.linkOrNotes, null) : ' · No file attached'}</div></div>
+    <button class="btn-sm" onclick="editItemById('Documents','${d.id}')">Edit</button></div>`).join(''); }
+}
+function docIcon(link) {
+  const ext = String(link||'').split('.').pop().toLowerCase();
+  if (['pdf'].includes(ext)) return '📄';
+  if (['png','jpg','jpeg','gif','webp'].includes(ext)) return '🖼️';
+  if (['doc','docx'].includes(ext)) return '📝';
+  if (['xls','xlsx','csv'].includes(ext)) return '📊';
+  return '📎';
+}
+// Turns a stored Drive/URL link into "Open" + (if it's a Drive file) a direct "Download" link too.
+function driveDownloadUrl(link) {
+  const m = String(link||'').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/uc?export=download&id=${m[1]}` : null;
+}
+function docLinksHtml(link, label) {
+  if (!link) return '';
+  const dl = driveDownloadUrl(link);
+  return `<span class="doc-links"><a href="${escapeAttr(link)}" target="_blank" rel="noopener">${label ? escapeHtml(label) : 'Open file'}</a>${dl ? `<span class="sep">·</span><a href="${escapeAttr(dl)}" target="_blank" rel="noopener">Download</a>` : ''}</span>`;
+}
+
+async function editCommunityInfo(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  showModal(`
+    <h2>Edit additional info</h2>
+    <div class="field"><label>Community name</label><input id="f-name" value="${escapeAttr(c.communityName)}"></div>
+    <div class="field"><label>Address</label><input id="f-address" value="${escapeAttr(c.address||'')}"></div>
+    <div class="field"><label>Additional info</label><textarea id="f-info">${escapeHtml(c.additionalInfo||'')}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditCommunity('${id}')">Save</button>
+    </div>`);
+}
+async function submitEditCommunity(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  try {
+    await api('updateCommunity', { portfolio: c.portfolio, communityId: id, fields: {
+      communityName: val('f-name'), address: val('f-address'), additionalInfo: val('f-info') } });
+    closeModal(); toast('Saved.'); STATE.communities = []; renderCommunityDetail(id);
+  } catch (e) { toast(e.message); }
+}
+
+function editAttorney(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  showModal(`
+    <h2>Edit Collections Attorney</h2>
+    <div class="field"><label>Attorney firm</label><input id="f-attorneyFirm" value="${escapeAttr(c.attorneyFirm||'')}"></div>
+    <div class="field"><label>Contact</label><input id="f-attorneyContact" value="${escapeAttr(c.attorneyContact||'')}"></div>
+    <div class="field"><label>Phone</label><input id="f-attorneyPhone" value="${escapeAttr(c.attorneyPhone||'')}"></div>
+    <div class="field"><label>Email</label><input id="f-attorneyEmail" value="${escapeAttr(c.attorneyEmail||'')}"></div>
+    <div class="field"><label>Additional info</label><textarea id="f-attorneyInfo">${escapeHtml(c.attorneyInfo||'')}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAttorney('${id}')">Save</button>
+    </div>`);
+}
+async function submitAttorney(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  try {
+    await api('updateCommunity', { portfolio: c.portfolio, communityId: id, fields: {
+      attorneyFirm: val('f-attorneyFirm'), attorneyContact: val('f-attorneyContact'),
+      attorneyPhone: val('f-attorneyPhone'), attorneyEmail: val('f-attorneyEmail'), attorneyInfo: val('f-attorneyInfo') } });
+    closeModal(); toast('Saved.'); STATE.communities = []; renderCommunityDetail(id);
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Documents: folder browser ---------------- */
+async function renderDocumentsTab(id) {
+  const body = document.getElementById('detail-body');
+  body.innerHTML = `<div class="loading">Loading…</div>`;
+  const c = STATE.communities.find(x => x.communityId === id);
+  try {
+    const docsR = await api('getItems', { sheet: 'Documents', portfolio: STATE.user.portfolio, communityId: id });
+    const docs = docsR.data;
+
+    if (!DOC_FOLDER) {
+      const foldersR = await api('getFolders', { portfolio: STATE.user.portfolio, communityId: id });
+      const folders = foldersR.data;
+      const uncatCount = docs.filter(d => !d.folder).length;
+      body.innerHTML = `
+        <div class="pagehead" style="margin-bottom:10px;"><div><h2 style="margin:0;font-size:15px;color:var(--cedar-deep);">Folders</h2></div>
+          <button class="btn btn-sm btn-gold" onclick="openNewFolder('${id}')">+ New folder</button></div>
+        <div class="folder-grid">
+          <div class="folder-card" onclick="openDocFolder('${id}', null, 'Uncategorized')">
+            <div class="fic">🗂️</div><div class="fname">Uncategorized</div><div class="fcount">${uncatCount} file${uncatCount===1?'':'s'}</div>
+          </div>
+          ${folders.map(f => {
+            const count = docs.filter(d => d.folder === f.folderName).length;
+            return `<div class="folder-card">
+              <div onclick="openDocFolder('${id}','${f.id}','${escapeAttr(f.folderName).replace(/'/g,"\\'")}')">
+                <div class="fic">📁</div><div class="fname">${escapeHtml(f.folderName)}</div><div class="fcount">${count} file${count===1?'':'s'}</div>
+              </div>
+              <div class="fmenu">
+                <button onclick="event.stopPropagation();renameFolderPrompt('${id}','${f.id}','${escapeAttr(f.folderName).replace(/'/g,"\\'")}')">Rename</button>
+                <button onclick="event.stopPropagation();deleteFolderConfirm('${id}','${f.id}','${escapeAttr(f.folderName).replace(/'/g,"\\'")}')">Delete</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      return;
+    }
+
+    const inFolder = docs.filter(d => (d.folder || '') === (DOC_FOLDER.folderName === 'Uncategorized' ? '' : DOC_FOLDER.folderName));
+    body.innerHTML = `
+      <button class="backlink" onclick="closeDocFolder('${id}')">&larr; All folders</button>
+      <div class="pagehead" style="margin-bottom:10px;"><div><h2 style="margin:0;font-size:15px;color:var(--cedar-deep);">${escapeHtml(DOC_FOLDER.folderName)}</h2></div>
+        <button class="btn btn-sm btn-gold" onclick="openGeneralAddDocument('${id}')">+ Add document</button></div>
+      <div class="card">${renderDetailRows(inFolder, 'Documents')}</div>`;
+  } catch (e) { body.innerHTML = `<div class="empty">Couldn't load documents. ${e.message}</div>`; }
+}
+function openDocFolder(id, folderId, folderName) { DOC_FOLDER = { id: folderId, folderName }; renderDocumentsTab(id); }
+function closeDocFolder(id) { DOC_FOLDER = null; renderDocumentsTab(id); }
+
+function openNewFolder(id) {
+  showModal(`<h2>New folder</h2>
+    <div class="field"><label>Folder name</label><input id="f-foldername" placeholder="e.g. Insurance, Contracts, Board Minutes"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitNewFolder('${id}')">Create</button>
+    </div>`, false);
+}
+async function submitNewFolder(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  const name = val('f-foldername').trim();
+  if (!name) { toast('Folder name is required.'); return; }
+  try {
+    await api('addFolder', { portfolio: c.portfolio, communityId: id, communityName: c.communityName, folderName: name });
+    closeModal(); toast('Folder created.'); renderDocumentsTab(id);
+  } catch (e) { toast(e.message); }
+}
+function renameFolderPrompt(id, folderId, currentName) {
+  showModal(`<h2>Rename folder</h2>
+    <div class="field"><label>Folder name</label><input id="f-foldername" value="${escapeAttr(currentName)}"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRenameFolder('${id}','${folderId}')">Save</button>
+    </div>`, false);
+}
+async function submitRenameFolder(id, folderId) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  const name = val('f-foldername').trim();
+  if (!name) { toast('Folder name is required.'); return; }
+  try {
+    await api('renameFolder', { portfolio: c.portfolio, communityId: id, folderId, folderName: name });
+    closeModal(); toast('Folder renamed.'); renderDocumentsTab(id);
+  } catch (e) { toast(e.message); }
+}
+function deleteFolderConfirm(id, folderId, folderName) {
+  showModal(`<h2>Delete "${escapeHtml(folderName)}"?</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;">Its documents aren't deleted — they move back to Uncategorized.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--red)" onclick="submitDeleteFolder('${id}','${folderId}')">Delete folder</button>
+    </div>`, false);
+}
+async function submitDeleteFolder(id, folderId) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  try {
+    await api('deleteFolder', { portfolio: c.portfolio, communityId: id, folderId });
+    closeModal(); toast('Folder deleted.'); renderDocumentsTab(id);
+  } catch (e) { toast(e.message); }
+}
+
+function confirmDeleteCommunity(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  if (!c) return;
+  showModal(`
+    <h2>Delete ${escapeHtml(c.communityName)}?</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;">This removes it from your active list. Everything attached to
+    it — action items, tasks, board/committee entries, meetings, and documents — is copied into the
+    <strong>Archived</strong> tab of the spreadsheet first, so nothing is lost, but it will disappear from the app.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--red)" onclick="submitDeleteCommunity('${id}')">Archive &amp; delete</button>
+    </div>`);
+}
+async function submitDeleteCommunity(id) {
+  const c = STATE.communities.find(x => x.communityId === id);
+  try {
+    await api('deleteCommunity', { portfolio: c.portfolio, communityId: id, archivedBy: STATE.user.name });
+    closeModal(); toast('Community archived and removed.');
+    STATE.communities = []; navTo('communities');
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Calendar (Google-Calendar-style month grid) ---------------- */
+let CAL_STATE = { year: null, month: null }; // month is 0-indexed
+let CAL_EVENTS_BY_DATE = {};
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function isoLocal(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+async function renderCalendar() {
+  const main = document.getElementById('main');
+  if (!STATE.communities.length) await loadCommunities();
+  const now = new Date();
+  if (CAL_STATE.year === null) { CAL_STATE.year = now.getFullYear(); CAL_STATE.month = now.getMonth(); }
+  main.innerHTML = `
+    <div class="pagehead"><div><h1>Calendar</h1><div class="desc">Meetings and due dates across your portfolio.</div></div></div>
+    <div class="gcal-header">
+      <div class="gcal-nav">
+        <button onclick="calShift(-1)" aria-label="Previous month">&#8249;</button>
+        <div class="gcal-title" id="gcal-title"></div>
+        <button onclick="calShift(1)" aria-label="Next month">&#8250;</button>
+        <button class="gcal-today-btn" onclick="calToday()">Today</button>
+      </div>
+      <div class="gcal-filter">
+        <select id="cal-community" onchange="renderCalendarGrid()">
+          <option value="">All communities</option>
+          ${STATE.communities.map(c => `<option value="${c.communityId}">${escapeHtml(c.communityName)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div id="cal-body"><div class="loading">Loading…</div></div>`;
+  renderCalendarGrid();
+}
+function calShift(delta) {
+  CAL_STATE.month += delta;
+  if (CAL_STATE.month < 0) { CAL_STATE.month = 11; CAL_STATE.year--; }
+  if (CAL_STATE.month > 11) { CAL_STATE.month = 0; CAL_STATE.year++; }
+  renderCalendarGrid();
+}
+function calToday() { const now = new Date(); CAL_STATE.year = now.getFullYear(); CAL_STATE.month = now.getMonth(); renderCalendarGrid(); }
+function chipClass(type) { return type === 'Meeting' ? 'chip-meeting' : type === 'Task Due' ? 'chip-task' : 'chip-ai'; }
+
+async function renderCalendarGrid() {
+  const body = document.getElementById('cal-body');
+  const titleEl = document.getElementById('gcal-title');
+  const { year, month } = CAL_STATE;
+  if (titleEl) titleEl.textContent = `${MONTH_NAMES[month]} ${year}`;
+  const communityId = val('cal-community');
+
+  const firstOfMonth = new Date(year, month, 1);
+  const lastOfMonth = new Date(year, month + 1, 0);
+  const gridStart = new Date(firstOfMonth); gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+  const gridEnd = new Date(lastOfMonth); gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()));
+
+  try {
+    const r = await api('getCalendar', { portfolio: STATE.user.portfolio, communityId: communityId || undefined, start: isoLocal(gridStart), end: isoLocal(gridEnd) });
+    const byDate = {};
+    r.data.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    CAL_EVENTS_BY_DATE = byDate;
+
+    const todayStr = isoLocal(new Date());
+    const wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let cells = '';
+    let cursor = new Date(gridStart);
+    while (cursor <= gridEnd) {
+      const dateStr = isoLocal(cursor);
+      const inMonth = cursor.getMonth() === month;
+      const dayEvents = byDate[dateStr] || [];
+      const shown = dayEvents.slice(0, 3);
+      const more = dayEvents.length - shown.length;
+      cells += `<div class="gcal-cell ${inMonth?'':'other-month'} ${dateStr===todayStr?'is-today':''}" onclick="openDayDetail('${dateStr}')">
+        <div class="gcal-daynum">${cursor.getDate()}</div>
+        ${shown.map(e => `<div class="gcal-chip ${chipClass(e.type)}">${escapeHtml(e.title)}</div>`).join('')}
+        ${more > 0 ? `<div class="gcal-more">+${more} more</div>` : ''}
+      </div>`;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    body.innerHTML = `<div class="gcal-grid">${wd.map(d => `<div class="gcal-wd">${d}</div>`).join('')}${cells}</div>`;
+  } catch (e) { body.innerHTML = `<div class="empty">Couldn't load calendar. ${e.message}</div>`; }
+}
+
+function openDayDetail(dateStr) {
+  const events = (CAL_EVENTS_BY_DATE[dateStr] || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  showModal(`<h2>${formatDate(dateStr)}</h2>
+    ${events.length ? events.map(e => `<div class="cal-evt">
+        <span class="dot ${e.type==='Meeting'?'dot-meeting':e.type==='Task Due'?'dot-task':'dot-ai'}"></span>
+        <div><div class="et">${escapeHtml(e.title)} <span style="font-weight:400;color:var(--ink-soft)">— ${e.type}</span></div>
+        <div class="es">${escapeHtml(e.communityName)}${e.time ? ' · ' + e.time : ''}${e.location ? ' · ' + escapeHtml(e.location) : ''}</div></div>
+      </div>`).join('') : '<div class="empty">No events this day.</div>'}
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`);
+}
+function formatDate(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});}catch(e){return d;} }
+
+/* ---------------- General Add (Action Item / Task / Board / Meeting / Document / Insurance / Service) ---------------- */
+let ADD_TYPE = 'ActionItems';
+async function openGeneralAdd(presetCommunityId, presetType) {
+  ADD_TYPE = presetType || 'ActionItems';
+  await loadCommunities(); // always fresh, so communities added directly in the Sheet show up right away
+  showModal(generalAddHtml(presetCommunityId));
+}
+function generalAddHtml(presetCommunityId) {
+  const communityId = presetCommunityId || STATE.activeCommunityId || '';
+  const options = STATE.communities.map(c => `<option value="${c.communityId}" ${c.communityId===communityId?'selected':''}>${escapeHtml(c.communityName)}</option>`).join('');
+  return `
+    <h2>Add to a community</h2>
+    <div class="type-chip-row">
+      ${['ActionItems','Tasks','BoardCommittee','Meetings','Documents','Insurance','Services'].map(t => `
+        <button class="type-chip ${ADD_TYPE===t?'active':''}" onclick="switchAddType('${t}','${communityId}')">${typeLabel(t)}</button>`).join('')}
+    </div>
+    <div class="field"><label>Community</label><select id="f-community" onchange="renderAddTypeFields()">${options || '<option value="">No communities yet</option>'}</select></div>
+    <div id="add-type-fields"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitGeneralAdd()">Save</button>
+    </div>`;
+}
+function typeLabel(t){ return {ActionItems:'Action Item',Tasks:'Task',BoardCommittee:'Board',Meetings:'Meeting',Documents:'Document',Insurance:'Insurance',Services:'Service'}[t]; }
+function switchAddType(t, communityId) { ADD_TYPE = t; showModal(generalAddHtml(communityId)); }
+async function openGeneralAddDocument(id) { ADD_TYPE = 'Documents'; await loadCommunities(); showModal(generalAddHtml(id)); }
+
+// populate type-specific fields after modal renders
+function renderAddTypeFields() {
+  const el = document.getElementById('add-type-fields'); if (!el) return;
+  const communityId = val('f-community');
+  if (ADD_TYPE === 'ActionItems' || ADD_TYPE === 'Tasks') {
+    el.innerHTML = `
+      <div class="field"><label>Title</label><input id="f-title" placeholder="Short summary"></div>
+      <div class="field"><label>Description</label><textarea id="f-description"></textarea></div>
+      <div class="field"><label>Due date</label><input type="date" id="f-dueDate"></div>
+      <div class="field"><label>Assigned to</label><input id="f-assignedTo" value="${escapeAttr(STATE.user.name)}"></div>`;
+  } else if (ADD_TYPE === 'BoardCommittee') {
+    el.innerHTML = `
+      <div class="field"><label>Type</label><select id="f-type"><option>Board</option><option>Committee</option></select></div>
+      <div class="field"><label>Name</label><input id="f-name"></div>
+      <div class="field"><label>Role</label><input id="f-role" placeholder="President, Treasurer, etc."></div>
+      <div class="field"><label>Start date</label><input type="date" id="f-startDate"></div>
+      <div class="field"><label>Notes</label><textarea id="f-notes"></textarea></div>`;
+  } else if (ADD_TYPE === 'Meetings') {
+    el.innerHTML = `
+      <div class="field"><label>Title</label><input id="f-title" placeholder="Q3 Board Meeting"></div>
+      <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="field"><label>Time</label><input type="time" id="f-time"></div>
+      <div class="field"><label>Location</label><input id="f-location"></div>
+      <div class="field"><label>Notes</label><textarea id="f-notes"></textarea></div>`;
+  } else if (ADD_TYPE === 'Documents') {
+    el.innerHTML = `
+      <div class="field"><label>Title</label><input id="f-title" placeholder="2026 Governing Documents"></div>
+      <div class="field"><label>Type</label><input id="f-type" placeholder="CC&Rs, Bylaws, Budget..."></div>
+      <div class="field"><label>Folder</label><select id="f-folder"><option value="">Uncategorized</option></select></div>
+      <div class="field"><label>Attach a file</label><input type="file" id="f-file"></div>
+      <div class="field"><label>Or paste a Google Drive link</label><input id="f-linkOrNotes" placeholder="https://drive.google.com/..."></div>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:-6px;">Attaching a file uploads it to the CMG Documents Drive folder automatically (~9MB limit). If both are filled in, the uploaded file wins.</div>`;
+    populateFolderSelect(communityId);
+  } else if (ADD_TYPE === 'Insurance') {
+    el.innerHTML = `
+      <div class="field"><label>Coverage type</label><input id="f-coverageType" placeholder="General Liability, Umbrella, D&O..."></div>
+      <div class="field"><label>Carrier name</label><input id="f-carrierName"></div>
+      <div class="field"><label>Agent</label><input id="f-agent"></div>
+      <div class="field"><label>Policy number</label><input id="f-policyNumber"></div>
+      <div class="field"><label>Renewal date</label><input type="date" id="f-renewalDate"></div>
+      <div class="field"><label>Follow-up date</label><input type="date" id="f-followUpDate"></div>
+      <div class="field"><label>Attach policy document</label><input type="file" id="f-file"></div>
+      <div class="field"><label>Or paste a Google Drive link</label><input id="f-docLink" placeholder="https://drive.google.com/..."></div>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:-6px;">The attached/linked document shows right on this policy once saved.</div>`;
+  } else if (ADD_TYPE === 'Services') {
+    el.innerHTML = `
+      <div class="field"><label>Service type</label><input id="f-serviceType" placeholder="Demand Letters, Lien Filing..."></div>
+      <div class="field"><label>Short description</label><input id="f-shortDescription" placeholder="One-line summary"></div>
+      <div class="field"><label>Full description</label><textarea id="f-fullDescription"></textarea></div>`;
+  }
+}
+
+// Populates the Documents folder <select> with this community's folders. Pass selectedFolderName
+// to force a selection (used when editing); otherwise defaults to the folder currently open, if any.
+async function populateFolderSelect(communityId, selectedFolderName) {
+  const c = STATE.communities.find(x => x.communityId === communityId);
+  if (!c) return;
+  const preselect = selectedFolderName !== undefined ? selectedFolderName : (DOC_FOLDER ? DOC_FOLDER.folderName : '');
+  try {
+    const r = await api('getFolders', { portfolio: c.portfolio, communityId });
+    const sel = document.getElementById('f-folder');
+    if (!sel) return;
+    r.data.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.folderName; opt.textContent = f.folderName;
+      if (preselect === f.folderName) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch (e) { /* leave just Uncategorized if this fails */ }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function readFileField(fileEl, target) {
+  if (!fileEl || !fileEl.files || !fileEl.files[0]) return true;
+  const file = fileEl.files[0];
+  if (file.size > 9 * 1024 * 1024) { toast('File is too large (limit ~9MB). Paste a Drive link instead.'); return false; }
+  target.fileData = await fileToBase64(file);
+  target.fileName = file.name;
+  target.mimeType = file.type || 'application/octet-stream';
+  return true;
+}
+
+async function submitGeneralAdd() {
+  const communityId = val('f-community');
+  const c = STATE.communities.find(x => x.communityId === communityId);
+  if (!c) { toast('Select a community first.'); return; }
+  const base = { portfolio: c.portfolio, communityId: c.communityId, communityName: c.communityName };
+  let payload = {};
+  if (ADD_TYPE === 'ActionItems' || ADD_TYPE === 'Tasks') {
+    payload = { ...base, title: val('f-title'), description: val('f-description'), dueDate: val('f-dueDate'), assignedTo: val('f-assignedTo'), status: 'Open' };
+  } else if (ADD_TYPE === 'BoardCommittee') {
+    payload = { ...base, type: val('f-type'), name: val('f-name'), role: val('f-role'), startDate: val('f-startDate'), notes: val('f-notes') };
+  } else if (ADD_TYPE === 'Meetings') {
+    payload = { ...base, title: val('f-title'), date: val('f-date'), time: val('f-time'), location: val('f-location'), notes: val('f-notes') };
+  } else if (ADD_TYPE === 'Documents') {
+    payload = { ...base, title: val('f-title'), type: val('f-type'), folder: val('f-folder'), linkOrNotes: val('f-linkOrNotes') };
+    try { if (!(await readFileField(document.getElementById('f-file'), payload))) return; } catch (e) { toast(e.message); return; }
+  } else if (ADD_TYPE === 'Insurance') {
+    payload = { ...base, coverageType: val('f-coverageType'), carrierName: val('f-carrierName'), agent: val('f-agent'),
+      policyNumber: val('f-policyNumber'), renewalDate: val('f-renewalDate'), followUpDate: val('f-followUpDate'), docLink: val('f-docLink') };
+    try { if (!(await readFileField(document.getElementById('f-file'), payload))) return; } catch (e) { toast(e.message); return; }
+  } else if (ADD_TYPE === 'Services') {
+    payload = { ...base, serviceType: val('f-serviceType'), shortDescription: val('f-shortDescription'), fullDescription: val('f-fullDescription') };
+  }
+  try {
+    await api('addItem', { sheet: ADD_TYPE, ...payload });
+    closeModal(); toast('Added.');
+    refreshCurrentView();
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Edit existing item (Action Item / Task / Board / Meeting / Document / Insurance / Service) ---------------- */
+function editItem(sheet, item) {
+  let fields = '';
+  if (sheet === 'ActionItems' || sheet === 'Tasks') {
+    fields = `
+      <div class="field"><label>Title</label><input id="f-title" value="${escapeAttr(item.title)}"></div>
+      <div class="field"><label>Description</label><textarea id="f-description">${escapeHtml(item.description||'')}</textarea></div>
+      <div class="field"><label>Due date</label><input type="date" id="f-dueDate" value="${item.dueDate||''}"></div>
+      <div class="field"><label>Assigned to</label><input id="f-assignedTo" value="${escapeAttr(item.assignedTo||'')}"></div>
+      <div class="field"><label>Status</label><select id="f-status"><option ${item.status==='Open'?'selected':''}>Open</option><option ${item.status==='Pending'?'selected':''}>Pending</option><option ${item.status==='Closed'?'selected':''}>Closed</option></select></div>`;
+  } else if (sheet === 'BoardCommittee') {
+    fields = `
+      <div class="field"><label>Type</label><select id="f-type"><option ${item.type==='Board'?'selected':''}>Board</option><option ${item.type==='Committee'?'selected':''}>Committee</option></select></div>
+      <div class="field"><label>Name</label><input id="f-name" value="${escapeAttr(item.name)}"></div>
+      <div class="field"><label>Role</label><input id="f-role" value="${escapeAttr(item.role||'')}"></div>
+      <div class="field"><label>Start date</label><input type="date" id="f-startDate" value="${item.startDate||''}"></div>
+      <div class="field"><label>Notes</label><textarea id="f-notes">${escapeHtml(item.notes||'')}</textarea></div>`;
+  } else if (sheet === 'Documents') {
+    fields = `
+      <div class="field"><label>Title</label><input id="f-title" value="${escapeAttr(item.title)}"></div>
+      <div class="field"><label>Type</label><input id="f-type" value="${escapeAttr(item.type||'')}"></div>
+      <div class="field"><label>Folder</label><select id="f-folder"><option value="">Uncategorized</option></select></div>
+      ${item.linkOrNotes ? `<div class="field"><label>Current file</label><div>${docLinksHtml(item.linkOrNotes, docIcon(item.linkOrNotes)+' Open current file')}</div></div>` : ''}
+      <div class="field"><label>Replace with a new file</label><input type="file" id="f-file"></div>
+      <div class="field"><label>Or paste a Google Drive link</label><input id="f-linkOrNotes" value="${escapeAttr(item.linkOrNotes||'')}" placeholder="https://drive.google.com/..."></div>`;
+  } else if (sheet === 'Insurance') {
+    fields = `
+      <div class="field"><label>Coverage type</label><input id="f-coverageType" value="${escapeAttr(item.coverageType)}"></div>
+      <div class="field"><label>Carrier name</label><input id="f-carrierName" value="${escapeAttr(item.carrierName||'')}"></div>
+      <div class="field"><label>Agent</label><input id="f-agent" value="${escapeAttr(item.agent||'')}"></div>
+      <div class="field"><label>Policy number</label><input id="f-policyNumber" value="${escapeAttr(item.policyNumber||'')}"></div>
+      <div class="field"><label>Renewal date</label><input type="date" id="f-renewalDate" value="${item.renewalDate||''}"></div>
+      <div class="field"><label>Follow-up date</label><input type="date" id="f-followUpDate" value="${item.followUpDate||''}"></div>
+      ${item.docLink ? `<div class="field"><label>Current document</label><div>${docLinksHtml(item.docLink, item.docName)}</div></div>` : ''}
+      <div class="field"><label>Replace with a new file</label><input type="file" id="f-file"></div>
+      <div class="field"><label>Or paste a Google Drive link</label><input id="f-docLink" value="${escapeAttr(item.docLink||'')}" placeholder="https://drive.google.com/..."></div>`;
+  } else if (sheet === 'Services') {
+    fields = `
+      <div class="field"><label>Service type</label><input id="f-serviceType" value="${escapeAttr(item.serviceType)}"></div>
+      <div class="field"><label>Short description</label><input id="f-shortDescription" value="${escapeAttr(item.shortDescription||'')}"></div>
+      <div class="field"><label>Full description</label><textarea id="f-fullDescription">${escapeHtml(item.fullDescription||'')}</textarea></div>`;
+  }
+  showModal(`<h2>Edit ${typeLabel(sheet)}</h2>${fields}
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick='submitEditItem("${sheet}","${item.id}")'>Save</button>
+    </div>`, false);
+  if (sheet === 'Documents') populateFolderSelect(item.communityId, item.folder || '');
+}
+async function submitEditItem(sheet, id) {
+  let fields = {};
+  if (sheet === 'ActionItems' || sheet === 'Tasks') {
+    fields = { title: val('f-title'), description: val('f-description'), dueDate: val('f-dueDate'), assignedTo: val('f-assignedTo'), status: val('f-status') };
+  } else if (sheet === 'BoardCommittee') {
+    fields = { type: val('f-type'), name: val('f-name'), role: val('f-role'), startDate: val('f-startDate'), notes: val('f-notes') };
+  } else if (sheet === 'Documents') {
+    fields = { title: val('f-title'), type: val('f-type'), folder: val('f-folder'), linkOrNotes: val('f-linkOrNotes') };
+    try { if (!(await readFileField(document.getElementById('f-file'), fields))) return; } catch (e) { toast(e.message); return; }
+  } else if (sheet === 'Insurance') {
+    fields = { coverageType: val('f-coverageType'), carrierName: val('f-carrierName'), agent: val('f-agent'),
+      policyNumber: val('f-policyNumber'), renewalDate: val('f-renewalDate'), followUpDate: val('f-followUpDate'), docLink: val('f-docLink') };
+    try { if (!(await readFileField(document.getElementById('f-file'), fields))) return; } catch (e) { toast(e.message); return; }
+  } else if (sheet === 'Services') {
+    fields = { serviceType: val('f-serviceType'), shortDescription: val('f-shortDescription'), fullDescription: val('f-fullDescription') };
+  }
+  try {
+    await api('updateItem', { sheet, id, fields });
+    closeModal(); toast('Saved.');
+    refreshCurrentView();
+  } catch (e) { toast(e.message); }
+}
+
+function refreshCurrentView() {
+  if (STATE.view === 'dashboard') renderDashboard();
+  else if (STATE.view === 'communities') renderCommunities();
+  else if (STATE.view === 'communityDetail') loadDetailTab(STATE.activeCommunityId);
+  else if (STATE.view === 'calendar') renderCalendarGrid();
+}
+
+/* ---------------- Modal + helpers ---------------- */
+function showModal(html, isGeneralAdd, wide) {
+  document.getElementById('modal-body').innerHTML = html;
+  const modalEl = document.querySelector('#modal-overlay .modal');
+  if (modalEl) modalEl.classList.toggle('wide', !!wide);
+  document.getElementById('modal-overlay').classList.add('show');
+  if (document.getElementById('add-type-fields')) renderAddTypeFields();
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target.id === 'modal-overlay') closeModal(); });
+
+function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+function escapeHtml(s) { return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* ---------------- Boot ---------------- */
+if (STATE.user) { enterApp(); } else { document.getElementById('view-login').style.display = 'flex'; }
+</script>
+</body>
+</html>
