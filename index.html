@@ -379,12 +379,34 @@ async function api(action, payload = {}) {
     toast("Backend not connected yet — see setup instructions.");
     throw new Error("API_URL not configured");
   }
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight against Apps Script
-    body: JSON.stringify({ action, payload })
-  });
-  const json = await res.json();
+  const controller = new AbortController();
+  // If the Apps Script deployment is asleep, misconfigured, or the network drops the
+  // request, fetch() can otherwise hang forever and every screen just sits on "Loading…".
+  // This guarantees the promise always settles within 25s so the UI can show an error instead.
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  let res;
+  try {
+    res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight against Apps Script
+      body: JSON.stringify({ action, payload }),
+      redirect: "follow",
+      signal: controller.signal
+    });
+  } catch (err) {
+    if (err.name === "AbortError") throw new Error("The server took too long to respond. Check your connection and try again.");
+    throw new Error("Couldn't reach the backend. Check your connection or the API_URL setup.");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  let json;
+  try {
+    json = await res.json();
+  } catch (err) {
+    // A non-JSON response almost always means the Apps Script deployment URL is wrong, the
+    // deployment is set to require login, or a stale (un-redeployed) version is still live.
+    throw new Error("Got an unexpected response from the backend — the Apps Script deployment may need to be redeployed (see setup instructions).");
+  }
   if (!json.ok) throw new Error(json.error || "Request failed");
   return json;
 }
@@ -397,8 +419,21 @@ function toast(msg) {
 }
 
 /* ---------------- State ---------------- */
+// sessionStorage keeps the signed-in user through a page refresh (cleared when the tab/browser closes).
+function loadStoredUser() {
+  try {
+    const raw = sessionStorage.getItem('cmg_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function storeUser(user) {
+  try {
+    if (user) sessionStorage.setItem('cmg_user', JSON.stringify(user));
+    else sessionStorage.removeItem('cmg_user');
+  } catch (e) { /* storage unavailable (e.g. private browsing) — session just won't survive a refresh */ }
+}
 let STATE = {
-  user: null, // session lives in memory only; signing in again after a page refresh is expected
+  user: loadStoredUser(),
   communities: [],
   activeCommunityId: null,
   view: 'dashboard'
@@ -412,6 +447,7 @@ async function doLogin() {
   try {
     const r = await api('login', { name, password: pass });
     STATE.user = { name: r.name, role: r.role, portfolio: r.portfolio };
+    storeUser(STATE.user);
     enterApp();
   } catch (e) {
     document.getElementById('login-error').style.display = 'block';
@@ -421,6 +457,7 @@ async function doLogin() {
 function logout() {
   clearInterval(NOTIF_POLL);
   STATE.user = null;
+  storeUser(null);
   document.getElementById('app-shell').style.display = 'none';
   document.getElementById('view-login').style.display = 'flex';
 }
@@ -883,27 +920,35 @@ function sortByDateDesc(items) {
     return db.localeCompare(da);
   });
 }
+const DATA_CACHE = {}; // key -> last-fetched payload, so revisiting a screen paints instantly instead of blanking to "Loading…"
+function dashboardHtml(ai, tk) {
+  return `
+    <div class="pagehead"><div><h1>Dashboard</h1><div class="desc">All action items and tasks across ${STATE.user.portfolio === 'All' ? 'both portfolios' : STATE.user.portfolio}, newest date first.</div></div>
+    <button class="btn btn-sm btn-gold" onclick="openGeneralAdd()">+ Add</button></div>
+    <div class="grid2">
+      <div class="card"><h2>Action Items <span class="count-pill">${ai.length}</span></h2>
+        <div id="dash-ai">${renderRows(ai, 'ActionItems')}</div>
+      </div>
+      <div class="card"><h2>Tasks <span class="count-pill">${tk.length}</span></h2>
+        <div id="dash-tasks">${renderRows(tk, 'Tasks')}</div>
+      </div>
+    </div>`;
+}
 async function renderDashboard() {
   const main = document.getElementById('main');
-  main.innerHTML = `<div class="pagehead"><div><h1>Dashboard</h1><div class="desc">All action items and tasks across ${STATE.user.portfolio === 'All' ? 'both portfolios' : STATE.user.portfolio}, newest date first.</div></div>
-  <button class="btn btn-sm btn-gold" onclick="openGeneralAdd()">+ Add</button></div>
-  <div class="loading">Loading…</div>`;
+  const cacheKey = 'dashboard_' + STATE.user.portfolio;
+  const cached = DATA_CACHE[cacheKey];
+  if (cached) main.innerHTML = dashboardHtml(cached.ai, cached.tk); // instant repaint from last visit
+  else main.innerHTML = `<div class="pagehead"><div><h1>Dashboard</h1></div></div><div class="loading">Loading…</div>`;
+  if (STATE.view !== 'dashboard') return; // navigated away before the render above even ran
   try {
     const r = await api('getDashboard', { portfolio: STATE.user.portfolio });
+    if (STATE.view !== 'dashboard') return; // user moved to another screen while this was in flight — drop the stale response
     const ai = sortByDateDesc(r.actionItems);
     const tk = sortByDateDesc(r.tasks);
-    main.innerHTML = `
-      <div class="pagehead"><div><h1>Dashboard</h1><div class="desc">All action items and tasks across ${STATE.user.portfolio === 'All' ? 'both portfolios' : STATE.user.portfolio}, newest date first.</div></div>
-      <button class="btn btn-sm btn-gold" onclick="openGeneralAdd()">+ Add</button></div>
-      <div class="grid2">
-        <div class="card"><h2>Action Items <span class="count-pill">${ai.length}</span></h2>
-          <div id="dash-ai">${renderRows(ai, 'ActionItems')}</div>
-        </div>
-        <div class="card"><h2>Tasks <span class="count-pill">${tk.length}</span></h2>
-          <div id="dash-tasks">${renderRows(tk, 'Tasks')}</div>
-        </div>
-      </div>`;
-  } catch (e) { main.innerHTML += `<div class="empty">Couldn't load dashboard. ${e.message}</div>`; }
+    DATA_CACHE[cacheKey] = { ai, tk };
+    main.innerHTML = dashboardHtml(ai, tk);
+  } catch (e) { if (!cached) main.innerHTML += `<div class="empty">Couldn't load dashboard. ${e.message}</div>`; }
 }
 
 const ITEM_CACHE = {}; // id -> item object, so onclick handlers never embed raw JSON (avoids apostrophe-breaks-attribute bugs)
@@ -937,23 +982,29 @@ async function loadCommunities() {
 function portfolioClass(p) { return p && p.indexOf('Renee') === 0 ? 'portfolio-renee' : 'portfolio-christina'; }
 function portfolioShort(p) { return p && p.indexOf('Renee') === 0 ? 'Renee' : 'Christina'; }
 
+function communitiesHtml(list) {
+  return `<div class="pagehead"><div><h1>Communities</h1><div class="desc">HOAs in your portfolio. <a href="#" onclick="openArchived();return false;" style="color:var(--ink-soft);text-decoration:underline;">View archived</a></div></div>
+    <button class="btn btn-sm btn-gold" onclick="openAddCommunity()">+ Add community</button></div>
+    <div class="comm-list">${list.length ? list.map(c => `
+      <div class="comm-row ${portfolioClass(c.portfolio)}" onclick="navTo('communityDetail','${c.communityId}')">
+        <div class="comm-row-main"><h3>${escapeHtml(c.communityName)}</h3>
+        <div class="addr">${escapeHtml(c.address||'No address on file')}</div></div>
+        <span class="comm-badge">${portfolioShort(c.portfolio)}</span>
+      </div>`).join('') : '<div class="empty">No communities yet. Add one to get started.</div>'}
+    </div>`;
+}
 async function renderCommunities() {
   const main = document.getElementById('main');
-  main.innerHTML = `<div class="pagehead"><div><h1>Communities</h1><div class="desc">HOAs in your portfolio. <a href="#" onclick="openArchived();return false;" style="color:var(--ink-soft);text-decoration:underline;">View archived</a></div></div>
-    <button class="btn btn-sm btn-gold" onclick="openAddCommunity()">+ Add community</button></div>
-    <div class="loading">Loading…</div>`;
+  const cacheKey = 'communities_' + STATE.user.portfolio;
+  const cached = DATA_CACHE[cacheKey];
+  if (cached) { STATE.communities = cached; main.innerHTML = communitiesHtml(cached); }
+  else main.innerHTML = `<div class="pagehead"><div><h1>Communities</h1></div></div><div class="loading">Loading…</div>`;
   try {
     const list = await loadCommunities();
-    main.innerHTML = `<div class="pagehead"><div><h1>Communities</h1><div class="desc">HOAs in your portfolio. <a href="#" onclick="openArchived();return false;" style="color:var(--ink-soft);text-decoration:underline;">View archived</a></div></div>
-      <button class="btn btn-sm btn-gold" onclick="openAddCommunity()">+ Add community</button></div>
-      <div class="comm-list">${list.length ? list.map(c => `
-        <div class="comm-row ${portfolioClass(c.portfolio)}" onclick="navTo('communityDetail','${c.communityId}')">
-          <div class="comm-row-main"><h3>${escapeHtml(c.communityName)}</h3>
-          <div class="addr">${escapeHtml(c.address||'No address on file')}</div></div>
-          <span class="comm-badge">${portfolioShort(c.portfolio)}</span>
-        </div>`).join('') : '<div class="empty">No communities yet. Add one to get started.</div>'}
-      </div>`;
-  } catch (e) { main.innerHTML += `<div class="empty">Couldn't load communities. ${e.message}</div>`; }
+    if (STATE.view !== 'communities') return; // navigated away while this was in flight
+    DATA_CACHE[cacheKey] = list;
+    main.innerHTML = communitiesHtml(list);
+  } catch (e) { if (!cached) main.innerHTML += `<div class="empty">Couldn't load communities. ${e.message}</div>`; }
 }
 
 /* ---------------- Archived communities (read-only) ---------------- */
@@ -1193,11 +1244,14 @@ async function renderDocumentsTab(id) {
   body.innerHTML = `<div class="loading">Loading…</div>`;
   const c = STATE.communities.find(x => x.communityId === id);
   try {
-    const docsR = await api('getItems', { sheet: 'Documents', portfolio: STATE.user.portfolio, communityId: id });
+    const needFolders = !DOC_FOLDER;
+    const [docsR, foldersR] = await Promise.all([
+      api('getItems', { sheet: 'Documents', portfolio: STATE.user.portfolio, communityId: id }),
+      needFolders ? api('getFolders', { portfolio: STATE.user.portfolio, communityId: id }) : Promise.resolve(null)
+    ]);
     const docs = docsR.data;
 
     if (!DOC_FOLDER) {
-      const foldersR = await api('getFolders', { portfolio: STATE.user.portfolio, communityId: id });
       const folders = foldersR.data;
       const uncatCount = docs.filter(d => !d.folder).length;
       body.innerHTML = `
